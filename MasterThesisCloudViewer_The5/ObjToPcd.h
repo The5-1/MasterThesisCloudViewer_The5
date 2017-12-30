@@ -168,8 +168,6 @@ void loadPcText(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& colors
 	vertices.clear();
 	colors.clear();
 
-	std::cout << "Load Point-Cloud Text file" << std::endl;
-
 	FILE * file = fopen(filename, "r");
 	if (file == NULL) {
 		cerr << "Model file not found: " << filename << endl;
@@ -181,7 +179,7 @@ void loadPcText(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& colors
 
 	int numVertices;
 	fscanf(file, "%i\n", &numVertices);
-	std::cout << numVertices << std::endl;
+	std::cout << "Load Point-Cloud from Text file: " << numVertices << " numVertices" << std::endl;
 
 	for (int i = 0; i < numVertices; i++) {
 		double X, Y, Z; 
