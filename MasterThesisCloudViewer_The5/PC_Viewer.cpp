@@ -106,59 +106,169 @@ void PC_Viewer::readHrcFile(std::string filename) {
 	this->root.numPoints = numPoints;
 
 	std::queue<OctreeBoxViewer*> nextLeafs;
+
+
+	/***************
+	****************/
+
 	//Transfrom unsigned char to bits: https://stackoverflow.com/questions/37487528/how-to-get-the-value-of-every-bit-of-an-unsigned-char
-	std::cout << "size of OctreeBox Class: " << sizeof(OctreeBoxViewer) << std::endl;
-	std::cout << "size of root->childs: " << sizeof(this->root.childs) << std::endl;
-	std::cout << "count of root->childs: " << this->root.childs.size() << std::endl;
-	
+	//std::cout << "size of OctreeBox Class: " << sizeof(OctreeBoxViewer) << std::endl;
+	//std::cout << "size of root->childs: " << sizeof(this->root.childs) << std::endl;
+	//std::cout << "count of root->childs: " << this->root.childs.size() << std::endl;
+	//
+	//for (int i = 0; i < 8; i++) {
+	//	bitMask[i] = (bitMaskChar & (1 << i)) != 0;
+
+	//	if (bitMask[i] == 1) {
+	//		std::cout << "size " << this->root.childs.size() << std::endl;
+	//		std::cout << "Roots childs #" << i << std::endl;
+	//		this->root.childs.push_back(OctreeBoxViewer());
+	//		nextLeafs.push( &root.childs[numLeafs] );
+	//		numLeafs++;
+	//	}
+	//}
+
+
+	//while (!nextLeafs.empty()) {
+	//	std::cout << "Queue with size: " << nextLeafs.size() << std::endl;
+	//	file_to_open.read((char*)&bitMaskChar, sizeof(unsigned char));
+	//	file_to_open.read((char*)&numPoints, sizeof(unsigned long int));
+
+	//	(*nextLeafs.front()).bitMaskChar = bitMaskChar;
+	//	(*nextLeafs.front()).numPoints = numPoints;
+
+	//	numLeafs = 0;
+	//	for (int i = 0; i < 8; i++) {
+	//		bitMask[i] = (bitMaskChar & (1 << i)) != 0;
+	//		if (bitMask[i] == 1) {
+	//			OctreeBoxViewer* front = nextLeafs.front();
+	//			//if(nextLeafs.front() != nullptr)
+	//			//front->childs.push_back(OctreeBoxViewer());
+	//			//nextLeafs.push(&( (*nextLeafs.front()).childs[numLeafs]));
+	//			numLeafs++;
+	//		}
+	//	}
+
+	//	nextLeafs.pop();
+	//}
+
+
+	/***************
+	****************/
+	//for (int i = 0; i < 8; i++) {
+	//	bitMask[i] = (bitMaskChar & (1 << i)) != 0;
+
+	//	if (bitMask[i] == 1) {
+	//		//std::cout << "size " << this->root.childs.size() << std::endl;
+	//		//std::cout << "Roots childs #" << i << std::endl;
+
+	//		OctreeBoxViewer nextBox;
+
+	//		this->root.childs.push_back(nextBox);
+	//		nextLeafs.push(&nextBox);
+	//		numLeafs++;
+	//	}
+	//}
+
+	//while (!nextLeafs.empty()) {
+	//	//std::cout << "Queue with size: " << nextLeafs.size() << std::endl;
+
+	//	OctreeBoxViewer* front = nextLeafs.front();
+
+	//	file_to_open.read((char*)&bitMaskChar, sizeof(unsigned char));
+	//	file_to_open.read((char*)&numPoints, sizeof(unsigned long int));
+
+	//	(*front).bitMaskChar = bitMaskChar;
+	//	(*front).numPoints = numPoints;
+
+	//	//std::cout << (*front).bitMaskChar << " " << bitMaskChar << std::endl;
+	//	//std::cout << (*front).numPoints << " " << numPoints << std::endl;
+
+	//	numLeafs = 0;
+	//	for (int i = 0; i < 8; i++) {
+	//		bitMask[i] = (bitMaskChar & (1 << i)) != 0;
+	//		if (bitMask[i] == 1) {
+	//			OctreeBoxViewer childBox;
+	//			front->childs.push_back(childBox);
+	//			nextLeafs.push(&childBox);
+	//			numLeafs++;
+	//		}
+	//	}
+
+	//	nextLeafs.pop();
+	//}
+
+	/***************
+	****************/
 	for (int i = 0; i < 8; i++) {
 		bitMask[i] = (bitMaskChar & (1 << i)) != 0;
 
 		if (bitMask[i] == 1) {
-			std::cout << "size " << this->root.childs.size() << std::endl;
-			std::cout << "Roots childs #" << i << std::endl;
-			this->root.childs.push_back(OctreeBoxViewer());
-			nextLeafs.push(&root.childs[numLeafs]);
+			//std::cout << "size " << this->root.childs.size() << std::endl;
+			//std::cout << "Roots childs #" << i << std::endl;
+
+			OctreeBoxViewer *nextBox = new OctreeBoxViewer();
+
+			this->root.childs.push_back(*nextBox);
+			nextLeafs.push(nextBox);
 			numLeafs++;
 		}
 	}
 
-	
-	std::cout << "Rest" << std::endl;
 	while (!nextLeafs.empty()) {
+		//std::cout << "Queue with size: " << nextLeafs.size() << std::endl;
+
+		OctreeBoxViewer* front = nextLeafs.front();
+
 		file_to_open.read((char*)&bitMaskChar, sizeof(unsigned char));
 		file_to_open.read((char*)&numPoints, sizeof(unsigned long int));
 
-		(*nextLeafs.front()).bitMaskChar = bitMaskChar;
-		(*nextLeafs.front()).numPoints = numPoints;
+		(*front).bitMaskChar = bitMaskChar;
+		(*front).numPoints = numPoints;
+
+		//std::cout << (*front).bitMaskChar << " " << bitMaskChar << std::endl;
+		//std::cout << (*front).numPoints << " " << numPoints << std::endl;
 
 		numLeafs = 0;
 		for (int i = 0; i < 8; i++) {
 			bitMask[i] = (bitMaskChar & (1 << i)) != 0;
 			if (bitMask[i] == 1) {
-				(*nextLeafs.front()).childs.push_back(OctreeBoxViewer());
-				nextLeafs.push(&(*nextLeafs.front()).childs[numLeafs]);
+				OctreeBoxViewer* childBox = new OctreeBoxViewer();
+				front->childs.push_back(*childBox);
+				nextLeafs.push(childBox);
 				numLeafs++;
 			}
 		}
 
+		//delete nextLeafs.front();
 		nextLeafs.pop();
 	}
 }
 
 void PC_Viewer::printOctree(OctreeBoxViewer level, std::string levelString) {
-	std::bitset<8> bitMask;
-	int numLeafs = 0;
-	
-	for (int i = 0; i != 8; i++) {
-		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
-	
-		if (bitMask[i] == 1) {
-			std::cout << levelString + std::to_string(i) << std::endl;
-			printOctree( level.childs[numLeafs], levelString + std::to_string(i));
-			numLeafs++;
-		}
+	//std::bitset<8> bitMask;
+	//int numLeafs = 0;
+	//
+	//std::cout << "Start printOctree" << std::endl;
+	std::cout <<"Size " << level.childs.size() << ", " << level.bitMaskChar << std::endl;
+	for (int i = 0; i < level.childs.size(); i++) {
+			std::cout << "a" << std::endl;
+
+			this->printOctree(level.childs[i], levelString + std::to_string(i));
 	}
+	
+
+	//for (int i = 0; i < 8; i++) {
+	//	bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
+	//
+	//	if (bitMask[i] == 1) {
+	//		std::cout << levelString + std::to_string(i) << std::endl;
+	//		//std::cout << level.childs.size() << std::endl;
+
+	//		this->printOctree( level.childs[numLeafs], levelString + std::to_string(i) );
+	//		numLeafs++;
+	//	}
+	//}
 }
 
 glm::mat4 PC_Viewer::getModelMatrixBB(glm::vec3 parentBoxMin, glm::vec3 parentBoxMax, int nextLevel, glm::vec3 &currentBoxMin, glm::vec3 &currentBoxMax) {

@@ -27,6 +27,8 @@ public:
 		//childs = std::vector<OctreeBox>(0);
 		//std::cout << "childs size: " << childs.size() << std::endl;
 	}
+
+	//~OctreeBoxViewer() = default;
 };
 
 class PC_Viewer
