@@ -82,6 +82,8 @@ PC_Octree::PC_Octree(std::vector<glm::vec3>& _vertices, std::vector<glm::vec3>& 
 
 PC_Octree::PC_Octree(std::vector<glm::vec3>& _vertices, std::vector<glm::vec3>& _colors, int _maxVerticesPerQuad)
 {
+	std::cout << "PC_Octree count of root->childs: " << this->root.children.size() << std::endl;
+
 	this->getAABB(minBoundingBox, maxBoundingBox, _vertices);
 
 	this->uploadGlBox();

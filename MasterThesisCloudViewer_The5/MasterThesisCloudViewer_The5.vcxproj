@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BinaryFileReader.h" />
     <ClInclude Include="BinaryTree.h" />
     <ClInclude Include="BST.h" />
     <ClInclude Include="FBO.h" />
@@ -38,6 +39,7 @@
     <ClInclude Include="ObjToPcd.h" />
     <ClInclude Include="PC_Octree.h" />
     <ClInclude Include="PC_OctreeSparse.h" />
+    <ClInclude Include="PC_Viewer.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="stb_image.h" />
@@ -60,6 +62,7 @@
     <ClCompile Include="MeshResampler.cpp" />
     <ClCompile Include="PC_Octree.cpp" />
     <ClCompile Include="PC_OctreeSparse.cpp" />
+    <ClCompile Include="PC_Viewer.cpp" />
     <ClCompile Include="SVO.cpp" />
     <ClCompile Include="times.cpp" />
     <ClCompile Include="VTKfile.cpp" />

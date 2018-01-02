@@ -25,12 +25,14 @@
 
 #include "PC_Octree.h"
 #include "ObjToPcd.h"
+#include "BinaryFileReader.h"
+#include "PC_Viewer.h"
 
 //#include <glm/gtc/matrix_transform.hpp>
 //glm::mat4 test = glm::frustum
 
 //Octree
-PC_Octree* octree = 0;
+PC_Octree* octree = nullptr;
 
 //Time
 Timer timer;
@@ -100,6 +102,8 @@ solidSphere *sphere = 0;
 simpleQuad * quad = 0;
 coordinateSystem *coordSysstem = 0;
 viewFrustrum * viewfrustrum = 0;
+BinaryReadDraw *binaryDraw = 0;
+PC_Viewer *viewer = nullptr;
 
 //Frame buffer object
 FBO *fbo = 0;
@@ -230,7 +234,7 @@ void init() {
 	/*****************************************************************
 	Error Messages :(
 	*****************************************************************/
-	std::cout << "ERROR main: We normals seem to be missplaced. GL_FRONT should be GL_BACK!!!" << std::endl;
+	//std::cout << "ERROR main: We normals seem to be missplaced. GL_FRONT should be GL_BACK!!!" << std::endl;
 
 	/*****************************************************************
 	VTK-File
@@ -271,6 +275,11 @@ void init() {
 	/*****************************************************************
 	PointClouds
 	*****************************************************************/
+	viewer = new PC_Viewer("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree");
+
+	binaryDraw = new BinaryReadDraw("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree/data/r/r024.bin");
+	binaryDraw->upload();
+
 	loadPcText(bigVertices, bigColors, "D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Ply-Files/treeOnRoad_mini.txt");
 	octree = new PC_Octree(bigVertices, bigColors, 100);
 
@@ -324,7 +333,7 @@ void init() {
 			counter++;
 		}
 	}
-
+	
 	std::cout << "-> Main: modelMatrixOctree.size " << modelMatrixOctree.size() << std::endl;
 	std::cout << "-> Main: octree->modelMatrixLowestLeaf.size() " << octree->modelMatrixLowestLeaf.size() << std::endl;
 
@@ -437,7 +446,9 @@ void PixelScene() {
 
 	pixelShader.uniform("glPointSize", glPointSizeFloat);
 
-	octree->drawPointCloud_PosCol();
+	//octree->drawPointCloud_PosCol();
+	binaryDraw->draw();
+
 	pixelShader.disable();
 
 	glDisable(GL_POINT_SPRITE);
@@ -1612,9 +1623,6 @@ void display() {
 }
 
 int main(int argc, char** argv) {
-	//std::vector<glm::vec3> test;
-	//std::cout << test.max_size() << std::endl;
-
 	glutInit(&argc, argv);
 	glutInitWindowSize(WIDTH, HEIGHT);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STENCIL);

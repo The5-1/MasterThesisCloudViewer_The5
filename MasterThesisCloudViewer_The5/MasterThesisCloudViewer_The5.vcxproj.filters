@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Viewer">
+      <UniqueIdentifier>{14debc22-c662-4689-bd31-17364d88219a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinaryTree.h">
@@ -102,6 +105,12 @@
     <ClInclude Include="VTKfile.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="BinaryFileReader.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PC_Viewer.h">
+      <Filter>Viewer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BinaryTree.cpp">
@@ -142,6 +151,9 @@
     </ClCompile>
     <ClCompile Include="VTKfile.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PC_Viewer.cpp">
+      <Filter>Viewer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
