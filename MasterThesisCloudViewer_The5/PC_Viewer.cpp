@@ -19,6 +19,11 @@ PC_Viewer::PC_Viewer(std::string _pathFolder)
 	
 	std::cout << "Start printing" << std::endl;
 	this->printOctree(this->root, "r");
+
+	std::cout << "Load all points" << std::endl;
+	this->loadAllPointsFromLevelToLeafs(this->root, "r");
+
+	this->uploadPointCloud();
 }
 
 
@@ -107,99 +112,6 @@ void PC_Viewer::readHrcFile(std::string filename) {
 
 	std::queue<OctreeBoxViewer*> nextLeafs;
 
-
-	/***************
-	****************/
-
-	//Transfrom unsigned char to bits: https://stackoverflow.com/questions/37487528/how-to-get-the-value-of-every-bit-of-an-unsigned-char
-	//std::cout << "size of OctreeBox Class: " << sizeof(OctreeBoxViewer) << std::endl;
-	//std::cout << "size of root->childs: " << sizeof(this->root.childs) << std::endl;
-	//std::cout << "count of root->childs: " << this->root.childs.size() << std::endl;
-	//
-	//for (int i = 0; i < 8; i++) {
-	//	bitMask[i] = (bitMaskChar & (1 << i)) != 0;
-
-	//	if (bitMask[i] == 1) {
-	//		std::cout << "size " << this->root.childs.size() << std::endl;
-	//		std::cout << "Roots childs #" << i << std::endl;
-	//		this->root.childs.push_back(OctreeBoxViewer());
-	//		nextLeafs.push( &root.childs[numLeafs] );
-	//		numLeafs++;
-	//	}
-	//}
-
-
-	//while (!nextLeafs.empty()) {
-	//	std::cout << "Queue with size: " << nextLeafs.size() << std::endl;
-	//	file_to_open.read((char*)&bitMaskChar, sizeof(unsigned char));
-	//	file_to_open.read((char*)&numPoints, sizeof(unsigned long int));
-
-	//	(*nextLeafs.front()).bitMaskChar = bitMaskChar;
-	//	(*nextLeafs.front()).numPoints = numPoints;
-
-	//	numLeafs = 0;
-	//	for (int i = 0; i < 8; i++) {
-	//		bitMask[i] = (bitMaskChar & (1 << i)) != 0;
-	//		if (bitMask[i] == 1) {
-	//			OctreeBoxViewer* front = nextLeafs.front();
-	//			//if(nextLeafs.front() != nullptr)
-	//			//front->childs.push_back(OctreeBoxViewer());
-	//			//nextLeafs.push(&( (*nextLeafs.front()).childs[numLeafs]));
-	//			numLeafs++;
-	//		}
-	//	}
-
-	//	nextLeafs.pop();
-	//}
-
-
-	/***************
-	****************/
-	//for (int i = 0; i < 8; i++) {
-	//	bitMask[i] = (bitMaskChar & (1 << i)) != 0;
-
-	//	if (bitMask[i] == 1) {
-	//		//std::cout << "size " << this->root.childs.size() << std::endl;
-	//		//std::cout << "Roots childs #" << i << std::endl;
-
-	//		OctreeBoxViewer nextBox;
-
-	//		this->root.childs.push_back(nextBox);
-	//		nextLeafs.push(&nextBox);
-	//		numLeafs++;
-	//	}
-	//}
-
-	//while (!nextLeafs.empty()) {
-	//	//std::cout << "Queue with size: " << nextLeafs.size() << std::endl;
-
-	//	OctreeBoxViewer* front = nextLeafs.front();
-
-	//	file_to_open.read((char*)&bitMaskChar, sizeof(unsigned char));
-	//	file_to_open.read((char*)&numPoints, sizeof(unsigned long int));
-
-	//	(*front).bitMaskChar = bitMaskChar;
-	//	(*front).numPoints = numPoints;
-
-	//	//std::cout << (*front).bitMaskChar << " " << bitMaskChar << std::endl;
-	//	//std::cout << (*front).numPoints << " " << numPoints << std::endl;
-
-	//	numLeafs = 0;
-	//	for (int i = 0; i < 8; i++) {
-	//		bitMask[i] = (bitMaskChar & (1 << i)) != 0;
-	//		if (bitMask[i] == 1) {
-	//			OctreeBoxViewer childBox;
-	//			front->childs.push_back(childBox);
-	//			nextLeafs.push(&childBox);
-	//			numLeafs++;
-	//		}
-	//	}
-
-	//	nextLeafs.pop();
-	//}
-
-	/***************
-	****************/
 	for (int i = 0; i < 8; i++) {
 		bitMask[i] = (bitMaskChar & (1 << i)) != 0;
 
@@ -209,7 +121,7 @@ void PC_Viewer::readHrcFile(std::string filename) {
 
 			OctreeBoxViewer *nextBox = new OctreeBoxViewer();
 
-			this->root.childs.push_back(*nextBox);
+			this->root.childs.push_back(nextBox);
 			nextLeafs.push(nextBox);
 			numLeafs++;
 		}
@@ -234,7 +146,7 @@ void PC_Viewer::readHrcFile(std::string filename) {
 			bitMask[i] = (bitMaskChar & (1 << i)) != 0;
 			if (bitMask[i] == 1) {
 				OctreeBoxViewer* childBox = new OctreeBoxViewer();
-				front->childs.push_back(*childBox);
+				front->childs.push_back(childBox);
 				nextLeafs.push(childBox);
 				numLeafs++;
 			}
@@ -246,29 +158,20 @@ void PC_Viewer::readHrcFile(std::string filename) {
 }
 
 void PC_Viewer::printOctree(OctreeBoxViewer level, std::string levelString) {
-	//std::bitset<8> bitMask;
-	//int numLeafs = 0;
-	//
-	//std::cout << "Start printOctree" << std::endl;
-	std::cout <<"Size " << level.childs.size() << ", " << level.bitMaskChar << std::endl;
-	for (int i = 0; i < level.childs.size(); i++) {
-			std::cout << "a" << std::endl;
+	std::bitset<8> bitMask;
+	int numLeafs = 0;
 
-			this->printOctree(level.childs[i], levelString + std::to_string(i));
-	}
+	for (int i = 0; i < 8; i++) {
+		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
 	
+		if (bitMask[i] == 1) {
+			std::cout << levelString + std::to_string(i) << std::endl;
+			//std::cout << level.childs.size() << std::endl;
 
-	//for (int i = 0; i < 8; i++) {
-	//	bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
-	//
-	//	if (bitMask[i] == 1) {
-	//		std::cout << levelString + std::to_string(i) << std::endl;
-	//		//std::cout << level.childs.size() << std::endl;
-
-	//		this->printOctree( level.childs[numLeafs], levelString + std::to_string(i) );
-	//		numLeafs++;
-	//	}
-	//}
+			this->printOctree(*level.childs[numLeafs], levelString + std::to_string(i) );
+			numLeafs++;
+		}
+	}
 }
 
 glm::mat4 PC_Viewer::getModelMatrixBB(glm::vec3 parentBoxMin, glm::vec3 parentBoxMax, int nextLevel, glm::vec3 &currentBoxMin, glm::vec3 &currentBoxMax) {
@@ -293,14 +196,22 @@ glm::mat4 PC_Viewer::getModelMatrixBB(glm::vec3 parentBoxMin, glm::vec3 parentBo
 	return glm::mat4(1.0f);
 }
 
-void PC_Viewer::loadAllPoints(std::string rootFolder, std::vector<int> currentLevel) {
+void PC_Viewer::loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString) {
 
-	
-	if (currentLevel.empty()) {
-		std::string cloudJsPath = rootFolder + "/r.bin";
-		this->readBinaryFile(cloudJsPath);
+	std::bitset<8> bitMask;
+	int numLeafs = 0;
+
+	for (int i = 0; i < 8; i++) {
+		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
+
+		if (bitMask[i] == 1) {
+			this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + std::to_string(i) + ".bin");
+			this->loadAllPointsFromLevelToLeafs(*level.childs[numLeafs], levelString + std::to_string(i));
+			numLeafs++;
+		}
 	}
 	
+	//this->readBinaryFile("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree/data/r/r.bin");
 }
 
 
@@ -314,6 +225,8 @@ void PC_Viewer::readBinaryFile(std::string filename) {
 
 			//glm::vec3 BBmin(2240519.12, 1363315.304, 1028.255);
 			glm::vec3 BBmin(0.0, 0.0, 0.0);
+
+			float customScale = 1.0f;
 
 			unsigned int X;
 			unsigned int Y;
@@ -331,9 +244,9 @@ void PC_Viewer::readBinaryFile(std::string filename) {
 			file_to_open.read((char*)&B, sizeof(unsigned char));
 			file_to_open.read((char*)&A, sizeof(unsigned char));
 
-			float Xf = ((float)X)*fileScale + BBmin.x;
-			float Yf = ((float)Y)*fileScale + BBmin.y;
-			float Zf = ((float)Z)*fileScale + BBmin.z;
+			float Xf = customScale * (((float)X)*fileScale + BBmin.x);
+			float Yf = customScale * (((float)Y)*fileScale + BBmin.y);
+			float Zf = customScale * (((float)Z)*fileScale + BBmin.z);
 
 			this->pcVertices.push_back(glm::vec3(Xf, Yf, Zf));
 			this->pcColors.push_back(glm::vec3(float(R) / 255.0f, float(G) / 255.0f, float(B) / 255.0f));
@@ -398,3 +311,26 @@ void PC_Viewer::drawBox()
 	glPolygonMode(GL_FRONT, GL_FILL);
 	glPolygonMode(GL_BACK, GL_FILL);
 }
+
+void PC_Viewer::uploadPointCloud() {
+	glGenBuffers(2, this->vboPC);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboPC[0]);
+	glBufferData(GL_ARRAY_BUFFER, this->pcVertices.size() * sizeof(float) * 3, this->pcVertices.data(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboPC[1]);
+	glBufferData(GL_ARRAY_BUFFER, this->pcColors.size() * sizeof(float) * 3, this->pcColors.data(), GL_STATIC_DRAW);
+}
+
+void PC_Viewer::drawPointCloud() {
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboPC[0]);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboPC[1]);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glDrawArrays(GL_POINTS, 0, this->pcVertices.size());
+}
+

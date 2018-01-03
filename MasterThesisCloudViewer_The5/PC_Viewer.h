@@ -18,7 +18,9 @@ public:
 	unsigned char bitMaskChar = 0;
 	glm::vec3 minLeafBox, maxLeafBox;
 
-	std::vector<OctreeBoxViewer> childs;
+	//std::vector<OctreeBoxViewer> childs;
+	std::vector<OctreeBoxViewer*> childs;
+
 public:
 
 	OctreeBoxViewer()
@@ -76,15 +78,18 @@ public:
 
 	void drawBox();
 
+	void uploadPointCloud();
+
+	void drawPointCloud();
+
 private:
 	void getLeafNames(std::string currentLeafName);
 	void readCloudJs(std::string filename);
 	void readHrcFile(std::string filename);
 	void printOctree(OctreeBoxViewer level, std::string levelString);
-	void printOctree(OctreeBoxViewer level, std::vector<int> levelInt);
 	glm::mat4 getModelMatrixBB(glm::vec3 parentBoxMin, glm::vec3 parentBoxMax, int nextLevel, glm::vec3 & currentBoxMin, glm::vec3 & currentBoxMax);
-	void loadAllPoints(std::string rootFolder, std::vector<int> currentLevel);
-	void loadAllPoints(std::string rootFolder);
+	void loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString);
+	void loadAllPointsFromLevelToLeafs(OctreeBoxViewer level);
 	void readBinaryFile(std::string filename);
 
 	void scaleBoundingBox();
