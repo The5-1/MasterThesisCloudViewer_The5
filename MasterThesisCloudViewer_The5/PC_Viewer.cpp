@@ -1,6 +1,6 @@
 #include "PC_Viewer.h"
 #include <queue>          // std::queue
-
+#include <cstdint>
 
 PC_Viewer::PC_Viewer()
 {
@@ -30,7 +30,7 @@ PC_Viewer::PC_Viewer(std::string _pathFolder)
 	this->loadAllPointsFromLevelToLeafs(this->root, "r");
 
 	//this->scaleVertices(1.0f);
-	this->scaleVertices(0.08f);
+	//this->scaleVertices(0.08f);
 
 	this->uploadPointCloud();
 
@@ -117,11 +117,9 @@ void PC_Viewer::readHrcFile(std::string filename) {
 
 	//Read root
 	file_to_open.read((char*)&bitMaskChar, sizeof(unsigned char));
-	//this->bitmasksVector.push_back(bitMaskChar);
 	this->root.bitMaskChar = bitMaskChar;
 
 	file_to_open.read((char*)&numPoints, sizeof(unsigned long int));
-	//this->numPointsVector.push_back(numPoints);
 	this->root.numPoints = numPoints;
 
 	std::queue<OctreeBoxViewer*> nextLeafs;
@@ -240,8 +238,8 @@ void PC_Viewer::printOctree(OctreeBoxViewer level, std::string levelString) {
 		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
 	
 		if (bitMask[i] == 1) {
-			std::cout << levelString + std::to_string(i) << " with Box: " << "(" << level.childs[numLeafs]->minLeafBox.x << "," << level.childs[numLeafs]->minLeafBox.y << "," << level.childs[numLeafs]->minLeafBox.z << ") to " <<
-																			"(" << level.childs[numLeafs]->maxLeafBox.x << "," << level.childs[numLeafs]->maxLeafBox.y << "," << level.childs[numLeafs]->maxLeafBox.z << ")" << std::endl;
+			//std::cout << levelString + std::to_string(i) << " with Box: " << "(" << level.childs[numLeafs]->minLeafBox.x << "," << level.childs[numLeafs]->minLeafBox.y << "," << level.childs[numLeafs]->minLeafBox.z << ") to " <<
+			//																"(" << level.childs[numLeafs]->maxLeafBox.x << "," << level.childs[numLeafs]->maxLeafBox.y << "," << level.childs[numLeafs]->maxLeafBox.z << ")" << std::endl;
 
 			this->printOctree(*level.childs[numLeafs], levelString + std::to_string(i) );
 			numLeafs++;
@@ -270,13 +268,13 @@ void PC_Viewer::loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string
 	int numLeafs = 0;
 
 	//this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", glm::vec3(0.0f));
+
+	//std::cout << this->pathFolder + "/data/r/" + levelString + ".bin:   " << level.minLeafBox.x << " , " << level.minLeafBox.y << " , " << level.minLeafBox.z << std::endl;
 	this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", level.minLeafBox);
 
 	for (int i = 0; i < 8; i++) {
 		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
-
 		if (bitMask[i] == 1) {
-			//this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + std::to_string(i) + ".bin", level.minLeafBox);
 			this->loadAllPointsFromLevelToLeafs(*level.childs[numLeafs], levelString + std::to_string(i));
 			numLeafs++;
 		}
@@ -284,6 +282,25 @@ void PC_Viewer::loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string
 
 }
 
+//void PC_Viewer::loadPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString) {
+//
+//	std::bitset<8> bitMask;
+//	int numLeafs = 0;
+//
+//	//this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", glm::vec3(0.0f));
+//
+//	//std::cout << this->pathFolder + "/data/r/" + levelString + ".bin:   " << level.minLeafBox.x << " , " << level.minLeafBox.y << " , " << level.minLeafBox.z << std::endl;
+//	this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", level.minLeafBox);
+//
+//	for (int i = 0; i < 8; i++) {
+//		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
+//		if (bitMask[i] == 1) {
+//			this->loadAllPointsFromLevelToLeafs(*level.childs[numLeafs], levelString + std::to_string(i));
+//			numLeafs++;
+//		}
+//	}
+//
+//}
 
 void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
 	std::ifstream file_to_open(filename, std::ios::binary);
@@ -292,9 +309,38 @@ void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
 
 	if (file_to_open.is_open()) {
 		while (!file_to_open.eof()) {
+			
+			float customScale = 0.05f;
 
-			float customScale = 1.0f;
+			//Read from file
 
+			std::uint32_t X;
+			std::uint32_t Y;
+			std::uint32_t Z;
+
+			std::uint8_t R;
+			std::uint8_t G;
+			std::uint8_t B;
+			std::uint8_t A;
+
+			file_to_open.read((char*)&X, sizeof(std::uint32_t) );
+			file_to_open.read((char*)&Y, sizeof(std::uint32_t) );
+			file_to_open.read((char*)&Z, sizeof(std::uint32_t) );
+			file_to_open.read((char*)&R, sizeof(std::uint8_t) );
+			file_to_open.read((char*)&G, sizeof(std::uint8_t) );
+			file_to_open.read((char*)&B, sizeof(std::uint8_t) );
+			file_to_open.read((char*)&A, sizeof(std::uint8_t) );
+
+			float Xf = customScale * ( (X)* fileScale + boundingBoxMin.x );
+			float Yf = customScale * ( (Y)* fileScale + boundingBoxMin.y );
+			float Zf = customScale * ( (Z)* fileScale + boundingBoxMin.z );
+			
+			//float Xf = customScale * (X)* fileScale + boundingBoxMin.x;
+			//float Yf = customScale * (Y)* fileScale + boundingBoxMin.y;
+			//float Zf = customScale * (Z)* fileScale + boundingBoxMin.z;
+
+
+			/*
 			unsigned int X;
 			unsigned int Y;
 			unsigned int Z;
@@ -310,31 +356,63 @@ void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
 			file_to_open.read((char*)&G, sizeof(unsigned char));
 			file_to_open.read((char*)&B, sizeof(unsigned char));
 			file_to_open.read((char*)&A, sizeof(unsigned char));
+			
+			loat Xf = customScale * (((float)X) * fileScale + boundingBoxMin.x);
+			loat Yf = customScale * (((float)Y) * fileScale + boundingBoxMin.y);
+			loat Zf = customScale * (((float)Z) * fileScale + boundingBoxMin.z);
+			*/
 
-			float Xf = customScale * (((float)X) * fileScale + boundingBoxMin.x);
-			float Yf = customScale * (((float)Y) * fileScale + boundingBoxMin.y);
-			float Zf = customScale * (((float)Z) * fileScale + boundingBoxMin.z);
+			/*
+			double customScale = 0.05;
 
+			std::uint32_t X;
+			std::uint32_t Y;
+			std::uint32_t Z;
+
+			std::uint8_t R;
+			std::uint8_t G;
+			std::uint8_t B;
+			std::uint8_t A;
+
+			file_to_open.read((char*)&X, sizeof(std::uint32_t));
+			file_to_open.read((char*)&Y, sizeof(std::uint32_t));
+			file_to_open.read((char*)&Z, sizeof(std::uint32_t));
+			file_to_open.read((char*)&R, sizeof(std::uint8_t));
+			file_to_open.read((char*)&G, sizeof(std::uint8_t));
+			file_to_open.read((char*)&B, sizeof(std::uint8_t));
+			file_to_open.read((char*)&A, sizeof(std::uint8_t));
+
+			double Xd = customScale * ((X)* fileScale + boundingBoxMin.x);
+			double Yd = customScale * ((Y)* fileScale + boundingBoxMin.y);
+			double Zd = customScale * ((Z)* fileScale + boundingBoxMin.z);
+
+			float Xf = (float)Xd;
+			float Yf = (float)Yd;
+			float Zf = (float)Zd;
+			*/
+
+			//Write results in temp vector
 			this->pcVertices.push_back(glm::vec3(Xf, Yf, Zf));
 			this->pcColors.push_back(glm::vec3(float(R) / 255.0f, float(G) / 255.0f, float(B) / 255.0f));
+			
 		}
 	}
 }
 
 void PC_Viewer::scaleBoundingBox() {
-	double scale = 0.00001;
+	this->boundingBoxMaxX -= this->boundingBoxMinX;
+	this->boundingBoxMaxY -= this->boundingBoxMinY;
+	this->boundingBoxMaxZ -= this->boundingBoxMinZ;
 
 	this->boundingBoxMinX = 0.0;
 	this->boundingBoxMinY = 0.0;
 	this->boundingBoxMinZ = 0.0;
 
-	this->boundingBoxMaxX -= this->boundingBoxMinX;
-	this->boundingBoxMaxY -= this->boundingBoxMinY;
-	this->boundingBoxMaxZ -= this->boundingBoxMinZ;
+	double customScale = 0.05;
 
-	//this->boundingBoxMaxX *= scale;
-	//this->boundingBoxMaxY *= scale;
-	//this->boundingBoxMaxZ *= scale;
+	this->boundingBoxMaxX *= customScale;
+	this->boundingBoxMaxY *= customScale;
+	this->boundingBoxMaxZ *= customScale;
 
 	std::cout << "Box min: (" << boundingBoxMinX << "," << boundingBoxMinY <<","<< boundingBoxMinZ << ")" << std::endl;
 	std::cout << "Box max (" << boundingBoxMaxX << "," << boundingBoxMaxY << "," << boundingBoxMaxZ << ")" << std::endl;
@@ -464,6 +542,15 @@ void PC_Viewer::drawPointCloud() {
 void PC_Viewer::scaleVertices(float scalar) {
 	for (int i = 0; i < this->pcVertices.size(); i++) {
 		this->pcVertices[i] *= scalar;
+
+		//float Xo, Yo, Zo;
+		//Xo = this->pcVertices[i].x;
+		//Yo = this->pcVertices[i].y;
+		//Zo = this->pcVertices[i].z;
+
+		//this->pcVertices[i].x = Zo;
+		//this->pcVertices[i].y = Yo;
+		//this->pcVertices[i].z = Xo;
 	}
 }
 

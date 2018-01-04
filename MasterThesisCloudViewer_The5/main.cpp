@@ -435,7 +435,7 @@ void PixelScene() {
 
 	for (int i = 0; i < modelMatrixOctree.size(); i++) {
 		basicShader.uniform("modelMatrix", modelMatrixOctree[i]);
-		basicShader.uniform("col", glm::vec3(1.0f, 0.0f, 0.0f));
+		basicShader.uniform("col", glm::vec3(1.0f, 0.4f, 0.7f));
 		viewer->drawBox();
 	}
 	basicShader.disable();
