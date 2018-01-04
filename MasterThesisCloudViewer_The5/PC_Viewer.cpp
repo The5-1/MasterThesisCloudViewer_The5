@@ -14,16 +14,27 @@ PC_Viewer::PC_Viewer(std::string _pathFolder)
 	
 	this->scaleBoundingBox();
 	
+	this->root.minLeafBox = glm::vec3(float(this->boundingBoxMinX), float(this->boundingBoxMinY), float(this->boundingBoxMinZ));
+	this->root.maxLeafBox = glm::vec3(float(this->boundingBoxMaxX), float(this->boundingBoxMaxY), float(this->boundingBoxMaxZ));
+
 	std::cout << "Start Octree construction" << std::endl;
 	this->readHrcFile(this->pathFolder + "/data/r/r.hrc");
 	
-	std::cout << "Start printing" << std::endl;
-	this->printOctree(this->root, "r");
+	std::cout << "Set Octree Bounding boxes" << std::endl;
+	this->setBoundingBoxLevels(this->root);
+
+	//std::cout << "Start printing" << std::endl;
+	//this->printOctree(this->root, "r");
 
 	std::cout << "Load all points" << std::endl;
 	this->loadAllPointsFromLevelToLeafs(this->root, "r");
 
+	//this->scaleVertices(1.0f);
+	this->scaleVertices(0.08f);
+
 	this->uploadPointCloud();
+
+	this->uploadGlBox();
 }
 
 
@@ -94,6 +105,9 @@ void PC_Viewer::readCloudJs(std::string filename) {
 	//fclose(file);
 }
 
+/*
+Used to construct the octree
+*/
 void PC_Viewer::readHrcFile(std::string filename) {
 	std::ifstream file_to_open(filename, std::ios::binary);
 	unsigned long int numPoints;
@@ -157,6 +171,67 @@ void PC_Viewer::readHrcFile(std::string filename) {
 	}
 }
 
+//void PC_Viewer::readHrcFileWithBoundingBox(std::string filename) {
+//	std::ifstream file_to_open(filename, std::ios::binary);
+//	unsigned long int numPoints;
+//	unsigned char bitMaskChar; //Unsigned char has a size of 1 byte ( = 8 bits)
+//	std::bitset<8> bitMask;
+//	int numLeafs = 0;
+//
+//	//Read root
+//	file_to_open.read((char*)&bitMaskChar, sizeof(unsigned char));
+//	this->root.bitMaskChar = bitMaskChar;
+//
+//	file_to_open.read((char*)&numPoints, sizeof(unsigned long int));
+//	this->root.numPoints = numPoints;
+//
+//	this->root.minLeafBox = glm::vec3(float(this->boundingBoxMinX), float(this->boundingBoxMinY), float(this->boundingBoxMinZ));
+//	this->root.maxLeafBox = glm::vec3(float(this->boundingBoxMaxX), float(this->boundingBoxMaxY), float(this->boundingBoxMaxZ));
+//
+//	std::queue<OctreeBoxViewer*> nextLeafs;
+//
+//	for (int i = 0; i < 8; i++) {
+//		bitMask[i] = (bitMaskChar & (1 << i)) != 0;
+//
+//		if (bitMask[i] == 1) {
+//			OctreeBoxViewer *nextBox = new OctreeBoxViewer();
+//			this->octreeForLeaf(this->root.minLeafBox, this->root.maxLeafBox, i, nextBox->minLeafBox, nextBox->maxLeafBox);
+//			this->root.childs.push_back(nextBox);
+//			nextLeafs.push(nextBox);
+//			numLeafs++;
+//		}
+//	}
+//
+//	while (!nextLeafs.empty()) {
+//		//std::cout << "Queue with size: " << nextLeafs.size() << std::endl;
+//
+//		OctreeBoxViewer* front = nextLeafs.front();
+//
+//		file_to_open.read((char*)&bitMaskChar, sizeof(unsigned char));
+//		file_to_open.read((char*)&numPoints, sizeof(unsigned long int));
+//
+//		(*front).bitMaskChar = bitMaskChar;
+//		(*front).numPoints = numPoints;
+//
+//		//std::cout << (*front).bitMaskChar << " " << bitMaskChar << std::endl;
+//		//std::cout << (*front).numPoints << " " << numPoints << std::endl;
+//
+//		numLeafs = 0;
+//		for (int i = 0; i < 8; i++) {
+//			bitMask[i] = (bitMaskChar & (1 << i)) != 0;
+//			if (bitMask[i] == 1) {
+//				OctreeBoxViewer* childBox = new OctreeBoxViewer();
+//				front->childs.push_back(childBox);
+//				nextLeafs.push(childBox);
+//				numLeafs++;
+//			}
+//		}
+//
+//		//delete nextLeafs.front();
+//		nextLeafs.pop();
+//	}
+//}
+
 void PC_Viewer::printOctree(OctreeBoxViewer level, std::string levelString) {
 	std::bitset<8> bitMask;
 	int numLeafs = 0;
@@ -165,8 +240,8 @@ void PC_Viewer::printOctree(OctreeBoxViewer level, std::string levelString) {
 		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
 	
 		if (bitMask[i] == 1) {
-			std::cout << levelString + std::to_string(i) << std::endl;
-			//std::cout << level.childs.size() << std::endl;
+			std::cout << levelString + std::to_string(i) << " with Box: " << "(" << level.childs[numLeafs]->minLeafBox.x << "," << level.childs[numLeafs]->minLeafBox.y << "," << level.childs[numLeafs]->minLeafBox.z << ") to " <<
+																			"(" << level.childs[numLeafs]->maxLeafBox.x << "," << level.childs[numLeafs]->maxLeafBox.y << "," << level.childs[numLeafs]->maxLeafBox.z << ")" << std::endl;
 
 			this->printOctree(*level.childs[numLeafs], levelString + std::to_string(i) );
 			numLeafs++;
@@ -174,30 +249,7 @@ void PC_Viewer::printOctree(OctreeBoxViewer level, std::string levelString) {
 	}
 }
 
-glm::mat4 PC_Viewer::getModelMatrixBB(glm::vec3 parentBoxMin, glm::vec3 parentBoxMax, int nextLevel, glm::vec3 &currentBoxMin, glm::vec3 &currentBoxMax) {
-	//switch (nextLevel) {
-	//case 0:
-	//	currentBoxMin = parentBoxMin;
-	//	currentBoxMax =
-	//}
-
-
-	//glm::mat4 modelMatrix(1.0f);
-
-	//if (rootLevel.empty()) {
-	//	modelMatrix = glm::scale(modelMatrix, glm::vec3(float(boundingBoxMaxX), float(boundingBoxMaxY), float(boundingBoxMaxZ)));
-	//	return modelMatrix;
-	//}
-
-	//for (int i = 0; i < rootLevel.size(); i++) {
-	//
-	//}
-
-	return glm::mat4(1.0f);
-}
-
-void PC_Viewer::loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString) {
-
+void PC_Viewer::setBoundingBoxLevels(OctreeBoxViewer level) {
 	std::bitset<8> bitMask;
 	int numLeafs = 0;
 
@@ -205,26 +257,41 @@ void PC_Viewer::loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string
 		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
 
 		if (bitMask[i] == 1) {
-			this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + std::to_string(i) + ".bin");
+			this->octreeForLeaf(level.minLeafBox, level.maxLeafBox, i, level.childs[numLeafs]->minLeafBox, level.childs[numLeafs]->maxLeafBox);
+			this->setBoundingBoxLevels(*level.childs[numLeafs]);
+			numLeafs++;
+		}
+	}
+}
+
+void PC_Viewer::loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString) {
+
+	std::bitset<8> bitMask;
+	int numLeafs = 0;
+
+	//this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", glm::vec3(0.0f));
+	this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", level.minLeafBox);
+
+	for (int i = 0; i < 8; i++) {
+		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
+
+		if (bitMask[i] == 1) {
+			//this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + std::to_string(i) + ".bin", level.minLeafBox);
 			this->loadAllPointsFromLevelToLeafs(*level.childs[numLeafs], levelString + std::to_string(i));
 			numLeafs++;
 		}
 	}
-	
-	//this->readBinaryFile("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree/data/r/r.bin");
+
 }
 
 
-void PC_Viewer::readBinaryFile(std::string filename) {
+void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
 	std::ifstream file_to_open(filename, std::ios::binary);
 
 	float fileScale = 0.01f;
 
 	if (file_to_open.is_open()) {
 		while (!file_to_open.eof()) {
-
-			//glm::vec3 BBmin(2240519.12, 1363315.304, 1028.255);
-			glm::vec3 BBmin(0.0, 0.0, 0.0);
 
 			float customScale = 1.0f;
 
@@ -244,9 +311,9 @@ void PC_Viewer::readBinaryFile(std::string filename) {
 			file_to_open.read((char*)&B, sizeof(unsigned char));
 			file_to_open.read((char*)&A, sizeof(unsigned char));
 
-			float Xf = customScale * (((float)X)*fileScale + BBmin.x);
-			float Yf = customScale * (((float)Y)*fileScale + BBmin.y);
-			float Zf = customScale * (((float)Z)*fileScale + BBmin.z);
+			float Xf = customScale * (((float)X) * fileScale + boundingBoxMin.x);
+			float Yf = customScale * (((float)Y) * fileScale + boundingBoxMin.y);
+			float Zf = customScale * (((float)Z) * fileScale + boundingBoxMin.z);
 
 			this->pcVertices.push_back(glm::vec3(Xf, Yf, Zf));
 			this->pcColors.push_back(glm::vec3(float(R) / 255.0f, float(G) / 255.0f, float(B) / 255.0f));
@@ -255,6 +322,8 @@ void PC_Viewer::readBinaryFile(std::string filename) {
 }
 
 void PC_Viewer::scaleBoundingBox() {
+	double scale = 0.00001;
+
 	this->boundingBoxMinX = 0.0;
 	this->boundingBoxMinY = 0.0;
 	this->boundingBoxMinZ = 0.0;
@@ -262,8 +331,66 @@ void PC_Viewer::scaleBoundingBox() {
 	this->boundingBoxMaxX -= this->boundingBoxMinX;
 	this->boundingBoxMaxY -= this->boundingBoxMinY;
 	this->boundingBoxMaxZ -= this->boundingBoxMinZ;
+
+	//this->boundingBoxMaxX *= scale;
+	//this->boundingBoxMaxY *= scale;
+	//this->boundingBoxMaxZ *= scale;
+
+	std::cout << "Box min: (" << boundingBoxMinX << "," << boundingBoxMinY <<","<< boundingBoxMinZ << ")" << std::endl;
+	std::cout << "Box max (" << boundingBoxMaxX << "," << boundingBoxMaxY << "," << boundingBoxMaxZ << ")" << std::endl;
 }
 
+
+void PC_Viewer::octreeForLeaf(glm::vec3 upperMin, glm::vec3 upperMax, int leaf, glm::vec3 &currentMin, glm::vec3 &currentMax) {
+
+	glm::vec3 direction = (upperMax - upperMin);
+
+	switch (leaf) {
+		//Left
+		case 0: {
+			currentMin = upperMin + glm::vec3(0.0f, 0.0f, 0.0f);
+			currentMax = upperMin + glm::vec3(0.5f * direction.x, 0.5f * direction.y, 0.5f * direction.z);
+			break;
+		}
+		case 1: {
+			currentMin = upperMin + glm::vec3(0.0f, 0.5f * direction.y, 0.0f);
+			currentMax = upperMin + glm::vec3(0.5f * direction.x, direction.y, 0.5f * direction.z);
+			break;
+		}
+		case 2: {
+			currentMin = upperMin + glm::vec3(0.0f, 0.0f, 0.5f * direction.z);
+			currentMax = upperMin + glm::vec3(0.5f * direction.x, 0.5f * direction.y, direction.z);
+			break;
+		}
+		case 3: {
+			currentMin = upperMin + glm::vec3(0.0f, 0.5f * direction.y, 0.5f * direction.z);
+			currentMax = upperMin + glm::vec3(0.5f * direction.x, direction.y, direction.z);
+			break;
+		}
+		
+		//Right
+		case 4: {
+			currentMin = upperMin + glm::vec3(0.5f * direction.x, 0.0f, 0.0f);
+			currentMax = upperMin + glm::vec3(direction.x, 0.5f * direction.y, 0.5f * direction.z);
+			break;
+		}
+		case 5: {
+			currentMin = upperMin + glm::vec3(0.5f * direction.x, 0.5f * direction.y, 0.0f);
+			currentMax = upperMin + glm::vec3(direction.x, direction.y, 0.5f * direction.z);
+			break;
+		}
+		case 6: {
+			currentMin = upperMin + glm::vec3(0.5f * direction.x, 0.0f, 0.5f * direction.z);
+			currentMax = upperMin + glm::vec3(direction.x, 0.5f * direction.y, direction.z);
+			break;
+		}
+		case 7: {
+			currentMin = upperMin + glm::vec3(0.5f * direction.x, 0.5f * direction.y, 0.5f * direction.z);
+			currentMax = upperMin + glm::vec3(direction.x, direction.y, direction.z);
+			break;
+		}
+	}
+}
 
 //Helper Functions
 void PC_Viewer::uploadGlBox()
@@ -334,3 +461,29 @@ void PC_Viewer::drawPointCloud() {
 	glDrawArrays(GL_POINTS, 0, this->pcVertices.size());
 }
 
+void PC_Viewer::scaleVertices(float scalar) {
+	for (int i = 0; i < this->pcVertices.size(); i++) {
+		this->pcVertices[i] *= scalar;
+	}
+}
+
+void PC_Viewer::octreeModelMatrix(OctreeBoxViewer level, std::vector<glm::mat4> &modelMatrixBox) {
+	std::bitset<8> bitMask;
+	int numLeafs = 0;
+
+	glm::mat4 _modelMatrix = glm::mat4(1.0f);
+	_modelMatrix = glm::translate(_modelMatrix,level.minLeafBox);
+	glm::vec3 scaleVec = glm::abs(level.maxLeafBox - level.minLeafBox);
+	_modelMatrix = glm::scale(_modelMatrix, scaleVec);
+
+	modelMatrixBox.push_back(_modelMatrix);
+
+	for (int i = 0; i < 8; i++) {
+		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
+		if (bitMask[i] == 1) {
+			this->octreeModelMatrix(*level.childs[numLeafs], modelMatrixBox);
+			numLeafs++;
+		}
+	}
+
+}

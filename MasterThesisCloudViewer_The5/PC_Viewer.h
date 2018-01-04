@@ -82,17 +82,24 @@ public:
 
 	void drawPointCloud();
 
+	void scaleVertices(float scalar);
+
+	void octreeModelMatrix(OctreeBoxViewer level, std::vector<glm::mat4>& modelMatrixBox);
+
 private:
 	void getLeafNames(std::string currentLeafName);
 	void readCloudJs(std::string filename);
 	void readHrcFile(std::string filename);
 	void printOctree(OctreeBoxViewer level, std::string levelString);
-	glm::mat4 getModelMatrixBB(glm::vec3 parentBoxMin, glm::vec3 parentBoxMax, int nextLevel, glm::vec3 & currentBoxMin, glm::vec3 & currentBoxMax);
+	void setBoundingBoxLevels(OctreeBoxViewer level);
+	
 	void loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString);
-	void loadAllPointsFromLevelToLeafs(OctreeBoxViewer level);
-	void readBinaryFile(std::string filename);
+
+	void readBinaryFile(std::string filename, glm::vec3 boundingBoxMin);
 
 	void scaleBoundingBox();
+
+	void octreeForLeaf(glm::vec3 upperMin, glm::vec3 upperMax, int leaf, glm::vec3 & currentMin, glm::vec3 & currentMax);
 
 	void uploadGlBox();
 

@@ -276,6 +276,7 @@ void init() {
 	PointClouds
 	*****************************************************************/
 	viewer = new PC_Viewer("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree");
+	viewer->octreeModelMatrix(viewer->root, modelMatrixOctree);
 
 	//binaryDraw = new BinaryReadDraw("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree/data/r/r024.bin");
 	//binaryDraw->upload();
@@ -405,13 +406,6 @@ void loadShader(bool init) {
 /* *********************************************************************************************************
 Scenes: Unit cube + Pointcloud
 ********************************************************************************************************* */
-//void standardScene() {
-//	gl_check_error("standardScene");
-//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//	glEnable(GL_DEPTH_TEST);
-//	glClearColor(0.3f, 0.3f, 0.3f, 1);
-//}
-
 void PixelScene() {
 	//Clear
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -431,6 +425,20 @@ void PixelScene() {
 	coordSysstem->draw();
 	basicColorShader.disable();
 
+
+	/* ********************************************
+	Octree Boxes
+	**********************************************/
+	basicShader.enable();
+	basicShader.uniform("viewMatrix", viewMatrix);
+	basicShader.uniform("projMatrix", projMatrix);
+
+	for (int i = 0; i < modelMatrixOctree.size(); i++) {
+		basicShader.uniform("modelMatrix", modelMatrixOctree[i]);
+		basicShader.uniform("col", glm::vec3(1.0f, 0.0f, 0.0f));
+		viewer->drawBox();
+	}
+	basicShader.disable();
 
 	/* ********************************************
 	Pointcloud
@@ -473,30 +481,6 @@ void display() {
 	}
 
 	PixelScene();
-
-	//switch (m_currenRender) {
-	//case SIMPLE:
-	//	standardScene();
-	//	break;
-	//case DEBUG:
-	//	standardSceneFBO();
-	//	break;
-	//case DEFERRED:
-	//	standardSceneDeferred();
-	//	break;
-	//case DEFERRED_UPDATE:
-	//	standardSceneDeferredUpdate();
-	//	break;
-	//case CULL_DEFERRED:
-	//	standardSceneDeferredUpdateCull();
-	//	break;
-	//case TRIANGLE:
-	//	splattingGITscene();
-	//	break;
-	//case KERNEL:
-	//	kernelScene();
-	//	break;
-	//};
 
 	TwDraw(); //Draw Tweak-Bar
 
