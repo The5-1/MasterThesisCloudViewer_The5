@@ -331,9 +331,9 @@ void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
 			file_to_open.read((char*)&B, sizeof(std::uint8_t) );
 			file_to_open.read((char*)&A, sizeof(std::uint8_t) );
 
-			float Xf = customScale * ( (X)* fileScale + boundingBoxMin.x );
-			float Yf = customScale * ( (Y)* fileScale + boundingBoxMin.y );
-			float Zf = customScale * ( (Z)* fileScale + boundingBoxMin.z );
+			float Xf = customScale * ( (X) * fileScale + boundingBoxMin.x );
+			float Yf = customScale * ( (Y) * fileScale + boundingBoxMin.y );
+			float Zf = customScale * ( (Z) * fileScale + boundingBoxMin.z );
 			
 			//float Xf = customScale * (X)* fileScale + boundingBoxMin.x;
 			//float Yf = customScale * (Y)* fileScale + boundingBoxMin.y;
