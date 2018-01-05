@@ -60,6 +60,9 @@ public:
 	std::vector<glm::vec3> pcVertices;
 	std::vector<glm::vec3> pcColors;
 
+	std::vector<GLuint> dynamicOctreeVBOs;
+	unsigned int dynamicMaxVertices = 2000000;
+
 	//GL Box Variables
 	GLuint vboBox[2];
 	std::vector<glm::vec3> boxVertices;
@@ -86,7 +89,17 @@ public:
 
 	void octreeModelMatrix(OctreeBoxViewer level, std::vector<glm::mat4>& modelMatrixBox);
 
-private:
+	void dynamicSetMaximumVertices(unsigned int _max);
+
+	void dynamicOctreeVBOs(unsigned int _max);
+
+	bool onCorrectPlaneSide(glm::vec3 & corner, glm::vec3 & normal, glm::vec3 & point);
+
+	int boxFrstrumCull(OctreeBoxViewer & leaf, glm::vec3 & normal, glm::vec3 & point);
+
+	void cullWithViewFrustrum(OctreeBoxViewer & leaf, viewFrustrum & vF);
+
+public:
 	void getLeafNames(std::string currentLeafName);
 	void readCloudJs(std::string filename);
 	void readHrcFile(std::string filename);
@@ -94,6 +107,8 @@ private:
 	void setBoundingBoxLevels(OctreeBoxViewer level);
 	
 	void loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString);
+
+	void loadIndexedPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString, std::vector<int> index);
 
 	void readBinaryFile(std::string filename, glm::vec3 boundingBoxMin);
 

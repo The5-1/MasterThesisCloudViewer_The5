@@ -175,7 +175,10 @@ void drawFBO(FBO *_fbo) {
 	standardMiniColorFboShader.disable();
 }
 
-
+typedef enum { INDEX, ALL } DRAW_TYPE; DRAW_TYPE m_splatDraw = INDEX;
+int index0 = 0, index1 = 0, index2 = 0;
+bool refresh = false;
+bool print = false;
 /* *********************************************************************************************************
 TweakBar
 ********************************************************************************************************* */
@@ -183,35 +186,20 @@ void setupTweakBar() {
 	TwInit(TW_OPENGL_CORE, NULL);
 	tweakBar = TwNewBar("Settings");
 
+	TwEnumVal Draw[] = { { INDEX, "INDEX" },{ ALL, "ALL" } };
+	TwType SplatsTwType = TwDefineEnum("DrawType", Draw, 2);
+	TwAddVarRW(tweakBar, "Splats", SplatsTwType, &m_splatDraw, NULL);
+
+	TwAddVarRW(tweakBar, "Index0", TW_TYPE_INT32, &index0, " label='Index0' min=-1 step=1 max=7");
+	TwAddVarRW(tweakBar, "Index1", TW_TYPE_INT32, &index1, " label='Index1' min=-1 step=1 max=7");
+	TwAddVarRW(tweakBar, "Index2", TW_TYPE_INT32, &index2, " label='Index2' min=-1 step=1 max=7");
+	TwAddVarRW(tweakBar, "refresh", TW_TYPE_BOOLCPP, &refresh, " label='refresh' ");
+
 	TwAddSeparator(tweakBar, "Splat Draw", nullptr);
-	TwEnumVal Splats[] = { { QUAD_SPLATS, "QUAD_SPLATS" },{ POINTS_GL, "POINTS_GL" } };
-	TwType SplatsTwType = TwDefineEnum("MeshType", Splats, 2);
-	TwAddVarRW(tweakBar, "Splats", SplatsTwType, &m_currenSplatDraw, NULL);
 	TwAddVarRW(tweakBar, "glPointSize", TW_TYPE_FLOAT, &glPointSizeFloat, " label='glPointSize' min=0.0 step=10.0 max=1000.0");
-	TwAddVarRW(tweakBar, "depthEpsilonOffset", TW_TYPE_FLOAT, &depthEpsilonOffset, " label='depthEpsilonOffset' min=-10.0 step=0.001 max=10.0");
-	TwAddVarRW(tweakBar, "Light Position", TW_TYPE_DIR3F, &lightPos, "label='Light Position'");
 
-	TwAddSeparator(tweakBar, "Utility", nullptr);
-	TwAddSeparator(tweakBar, "Wireframe", nullptr);
-	TwAddVarRW(tweakBar, "Wireframe Teapot", TW_TYPE_BOOLCPP, &wireFrameTeapot, " label='Wireframe Teapot' ");
-	TwAddVarRW(tweakBar, "Backface Cull", TW_TYPE_BOOLCPP, &backfaceCull, " label='Backface Cull' ");
-
-	TwAddSeparator(tweakBar, "Octree", nullptr);
-	TwAddVarRW(tweakBar, "Octree Box", TW_TYPE_BOOLCPP, &drawOctreeBox, " label='Octree Box' ");
-
-	TwAddSeparator(tweakBar, "Set Viewfrustrum", nullptr);
-	TwAddVarRW(tweakBar, "ViewFrustrum", TW_TYPE_BOOLCPP, &setViewFrustrum, " label='ViewFrustrum' ");
-	TwAddVarRW(tweakBar, "Fill Frustrum", TW_TYPE_BOOLCPP, &fillViewFrustrum, " label='Fill Frustrum' ");
-	TwAddVarRW(tweakBar, "Frustrum Cull", TW_TYPE_BOOLCPP, &showFrustrumCull, " label='Frustrum Cull' ");
-
-	TwAddSeparator(tweakBar, "Filter", nullptr);
-	TwAddVarRW(tweakBar, "Use Gauss", TW_TYPE_BOOLCPP, &useGaussFilter, " label='Use Gauss' ");
-	TwAddVarRW(tweakBar, "Passes", TW_TYPE_INT16, &filterPasses, " label='Passes' min=0 step=1 max=100");
-
-	TwAddSeparator(tweakBar, "Debug Options", nullptr);
-	TwEnumVal render[] = { {SIMPLE, "SIMPLE"}, {DEBUG, "DEBUG"}, {DEFERRED, "DEFERRED"}, { DEFERRED_UPDATE, "DEFERRED_UPDATE"}, {CULL_DEFERRED ,"CULL_DEFERRED"}, { TRIANGLE , "TRIANGLE"}, { KERNEL, "KERNEL"} };
-	TwType renderTwType = TwDefineEnum("renderType", render, 7);
-	TwAddVarRW(tweakBar, "render", renderTwType, &m_currenRender, NULL);
+	TwAddSeparator(tweakBar, "Help", nullptr);
+	TwAddVarRW(tweakBar, "Print", TW_TYPE_BOOLCPP, &print, " label='Print' ");
 }
 
 /* *********************************************************************************************************
@@ -480,7 +468,31 @@ void display() {
 		glutSetWindowTitle(timeString);
 	}
 
-	PixelScene();
+	if (m_splatDraw == ALL) {
+		if (refresh) {
+			refresh = false;
+
+			viewer->pcVertices.clear();
+			viewer->pcColors.clear();
+
+			viewer->loadAllPointsFromLevelToLeafs(viewer->root, "r");
+			viewer->uploadPointCloud();
+		}
+		PixelScene();
+	}
+	else if (m_splatDraw == INDEX) {
+		if (refresh) {
+			refresh = false;
+			std::vector<int> indexSet = {index0, index1, index2};
+
+			viewer->pcVertices.clear();
+			viewer->pcColors.clear();
+
+			viewer->loadIndexedPointsFromLevelToLeafs(viewer->root, "r", indexSet);
+			viewer->uploadPointCloud();
+		}
+		PixelScene();
+	}
 
 	TwDraw(); //Draw Tweak-Bar
 

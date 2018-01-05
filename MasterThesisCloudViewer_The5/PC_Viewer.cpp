@@ -1,6 +1,7 @@
 #include "PC_Viewer.h"
 #include <queue>          // std::queue
 #include <cstdint>
+#include "helper.h" //For viewfrustrum
 
 PC_Viewer::PC_Viewer()
 {
@@ -23,8 +24,8 @@ PC_Viewer::PC_Viewer(std::string _pathFolder)
 	std::cout << "Set Octree Bounding boxes" << std::endl;
 	this->setBoundingBoxLevels(this->root);
 
-	//std::cout << "Start printing" << std::endl;
-	//this->printOctree(this->root, "r");
+	std::cout << "Start printing" << std::endl;
+	this->printOctree(this->root, "r");
 
 	std::cout << "Load all points" << std::endl;
 	this->loadAllPointsFromLevelToLeafs(this->root, "r");
@@ -234,6 +235,9 @@ void PC_Viewer::printOctree(OctreeBoxViewer level, std::string levelString) {
 	std::bitset<8> bitMask;
 	int numLeafs = 0;
 
+	std::cout << levelString << " with Box: " << "(" << level.minLeafBox.x << "," << level.minLeafBox.y << "," << level.minLeafBox.z << ") to " <<
+		"(" << level.maxLeafBox.x << "," << level.maxLeafBox.y << "," << level.maxLeafBox.z << ")" << std::endl;
+
 	for (int i = 0; i < 8; i++) {
 		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
 	
@@ -269,6 +273,8 @@ void PC_Viewer::loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string
 
 	//this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", glm::vec3(0.0f));
 
+	//this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", glm::vec3(10.0f));
+
 	//std::cout << this->pathFolder + "/data/r/" + levelString + ".bin:   " << level.minLeafBox.x << " , " << level.minLeafBox.y << " , " << level.minLeafBox.z << std::endl;
 	this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", level.minLeafBox);
 
@@ -282,25 +288,33 @@ void PC_Viewer::loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string
 
 }
 
-//void PC_Viewer::loadPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString) {
-//
-//	std::bitset<8> bitMask;
-//	int numLeafs = 0;
-//
-//	//this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", glm::vec3(0.0f));
-//
-//	//std::cout << this->pathFolder + "/data/r/" + levelString + ".bin:   " << level.minLeafBox.x << " , " << level.minLeafBox.y << " , " << level.minLeafBox.z << std::endl;
-//	this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", level.minLeafBox);
-//
-//	for (int i = 0; i < 8; i++) {
-//		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
-//		if (bitMask[i] == 1) {
-//			this->loadAllPointsFromLevelToLeafs(*level.childs[numLeafs], levelString + std::to_string(i));
-//			numLeafs++;
-//		}
-//	}
-//
-//}
+void PC_Viewer::loadIndexedPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString, std::vector<int> index) {
+
+	std::bitset<8> bitMask;
+	int numLeafs = 0;
+
+	std::string indexedLevel = "r";
+
+	for (int i = 0; i < index.size(); i++) {
+		if (index[i] >= 0) {
+			indexedLevel = indexedLevel + std::to_string(index[i]);
+		}
+	}
+
+	if (levelString.compare(indexedLevel) == 0) {
+		std::cout << "loadIndexedPointsFromLevelToLeafs: Drawing " << levelString << std::endl;
+		this->readBinaryFile(this->pathFolder + "/data/r/" + levelString + ".bin", level.minLeafBox);
+	}
+
+	for (int i = 0; i < 8; i++) {
+		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
+		if (bitMask[i] == 1) {
+			this->loadIndexedPointsFromLevelToLeafs(*level.childs[numLeafs], levelString + std::to_string(i), index);
+			numLeafs++;
+		}
+	}
+
+}
 
 void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
 	std::ifstream file_to_open(filename, std::ios::binary);
@@ -310,10 +324,10 @@ void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
 	if (file_to_open.is_open()) {
 		while (!file_to_open.eof()) {
 			
+			//float customScale = 1.0f;
 			float customScale = 0.05f;
 
 			//Read from file
-
 			std::uint32_t X;
 			std::uint32_t Y;
 			std::uint32_t Z;
@@ -323,21 +337,21 @@ void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
 			std::uint8_t B;
 			std::uint8_t A;
 
-			file_to_open.read((char*)&X, sizeof(std::uint32_t) );
-			file_to_open.read((char*)&Y, sizeof(std::uint32_t) );
-			file_to_open.read((char*)&Z, sizeof(std::uint32_t) );
-			file_to_open.read((char*)&R, sizeof(std::uint8_t) );
-			file_to_open.read((char*)&G, sizeof(std::uint8_t) );
-			file_to_open.read((char*)&B, sizeof(std::uint8_t) );
-			file_to_open.read((char*)&A, sizeof(std::uint8_t) );
+			file_to_open.read( (char*)&X, sizeof(std::uint32_t) );
+			file_to_open.read( (char*)&Y, sizeof(std::uint32_t) );
+			file_to_open.read( (char*)&Z, sizeof(std::uint32_t) );
+			file_to_open.read( (char*)&R, sizeof(std::uint8_t) );
+			file_to_open.read( (char*)&G, sizeof(std::uint8_t) );
+			file_to_open.read( (char*)&B, sizeof(std::uint8_t) );
+			file_to_open.read( (char*)&A, sizeof(std::uint8_t) );
 
-			float Xf = customScale * ( (X) * fileScale + boundingBoxMin.x );
-			float Yf = customScale * ( (Y) * fileScale + boundingBoxMin.y );
-			float Zf = customScale * ( (Z) * fileScale + boundingBoxMin.z );
+			//float Xf = customScale * ( (X) * fileScale + boundingBoxMin.x );
+			//float Yf = customScale * ( (Y) * fileScale + boundingBoxMin.y );
+			//float Zf = customScale * ( (Z) * fileScale + boundingBoxMin.z );
 			
-			//float Xf = customScale * (X)* fileScale + boundingBoxMin.x;
-			//float Yf = customScale * (Y)* fileScale + boundingBoxMin.y;
-			//float Zf = customScale * (Z)* fileScale + boundingBoxMin.z;
+			float Xf = customScale * ((float)X)* fileScale + boundingBoxMin.x;
+			float Yf = customScale * ((float)Y)* fileScale + boundingBoxMin.y;
+			float Zf = customScale * ((float)Z)* fileScale + boundingBoxMin.z;
 
 
 			/*
@@ -424,22 +438,25 @@ void PC_Viewer::octreeForLeaf(glm::vec3 upperMin, glm::vec3 upperMax, int leaf, 
 	glm::vec3 direction = (upperMax - upperMin);
 
 	switch (leaf) {
-		//Left
+				//Zero
 		case 0: {
 			currentMin = upperMin + glm::vec3(0.0f, 0.0f, 0.0f);
 			currentMax = upperMin + glm::vec3(0.5f * direction.x, 0.5f * direction.y, 0.5f * direction.z);
 			break;
 		}
-		case 1: {
+				//One
+		case 2: {
 			currentMin = upperMin + glm::vec3(0.0f, 0.5f * direction.y, 0.0f);
 			currentMax = upperMin + glm::vec3(0.5f * direction.x, direction.y, 0.5f * direction.z);
 			break;
 		}
-		case 2: {
+				//Two
+		case 1: {
 			currentMin = upperMin + glm::vec3(0.0f, 0.0f, 0.5f * direction.z);
 			currentMax = upperMin + glm::vec3(0.5f * direction.x, 0.5f * direction.y, direction.z);
 			break;
 		}
+				//Three
 		case 3: {
 			currentMin = upperMin + glm::vec3(0.0f, 0.5f * direction.y, 0.5f * direction.z);
 			currentMax = upperMin + glm::vec3(0.5f * direction.x, direction.y, direction.z);
@@ -447,21 +464,25 @@ void PC_Viewer::octreeForLeaf(glm::vec3 upperMin, glm::vec3 upperMax, int leaf, 
 		}
 		
 		//Right
+				//Four
 		case 4: {
 			currentMin = upperMin + glm::vec3(0.5f * direction.x, 0.0f, 0.0f);
 			currentMax = upperMin + glm::vec3(direction.x, 0.5f * direction.y, 0.5f * direction.z);
 			break;
 		}
-		case 5: {
+				//Five
+		case 6: {
 			currentMin = upperMin + glm::vec3(0.5f * direction.x, 0.5f * direction.y, 0.0f);
 			currentMax = upperMin + glm::vec3(direction.x, direction.y, 0.5f * direction.z);
 			break;
 		}
-		case 6: {
+				//Six
+		case 5: {
 			currentMin = upperMin + glm::vec3(0.5f * direction.x, 0.0f, 0.5f * direction.z);
 			currentMax = upperMin + glm::vec3(direction.x, 0.5f * direction.y, direction.z);
 			break;
 		}
+				//Seven
 		case 7: {
 			currentMin = upperMin + glm::vec3(0.5f * direction.x, 0.5f * direction.y, 0.5f * direction.z);
 			currentMax = upperMin + glm::vec3(direction.x, direction.y, direction.z);
@@ -573,4 +594,211 @@ void PC_Viewer::octreeModelMatrix(OctreeBoxViewer level, std::vector<glm::mat4> 
 		}
 	}
 
+}
+
+
+
+/***********
+Dynamic Octree Load
+***********/
+void PC_Viewer::dynamicSetMaximumVertices(unsigned int _max) {
+	this->dynamicMaxVertices = _max;
+}
+
+void PC_Viewer::dynamicOctreeVBOs(unsigned int _max) {
+	glDeleteBuffers(this->dynamicOctreeVBOs.size(), this->dynamicOctreeVBOs);
+
+	this->dynamicOctreeVBOs.resize(_max);
+
+	glGenBuffers(this->dynamicOctreeVBOs.size(), this->dynamicOctreeVBOs);
+}
+
+bool PC_Viewer::onCorrectPlaneSide(glm::vec3& corner, glm::vec3& normal, glm::vec3& point) {
+	if (glm::dot(normal, (corner - point)) > 0) {
+		return true;
+	}
+
+	return false;
+}
+
+
+int PC_Viewer::boxFrstrumCull(OctreeBoxViewer& leaf, glm::vec3& normal, glm::vec3& point) {
+	//Return 0 if box inside frustrum
+	//Return 1 if box outside frustrum
+	//Return 2 if box cuts Frustrum
+
+	int counter = 0;
+
+	if (!onCorrectPlaneSide(leaf.minLeafBox, normal, point)) {
+		counter++;
+	}
+
+	if (!onCorrectPlaneSide(leaf.maxLeafBox, normal, point)) {
+		counter++;
+	}
+
+	if (!onCorrectPlaneSide(glm::vec3(leaf.minLeafBox.x, leaf.minLeafBox.y, leaf.maxLeafBox.z), normal, point)) {
+		counter++;
+	}
+
+	if (!onCorrectPlaneSide(glm::vec3(leaf.minLeafBox.x, leaf.maxLeafBox.y, leaf.minLeafBox.z), normal, point)) {
+		counter++;
+	}
+
+	if (!onCorrectPlaneSide(glm::vec3(leaf.maxLeafBox.x, leaf.minLeafBox.y, leaf.minLeafBox.z), normal, point)) {
+		counter++;
+	}
+
+	if (!onCorrectPlaneSide(glm::vec3(leaf.minLeafBox.x, leaf.maxLeafBox.y, leaf.maxLeafBox.z), normal, point)) {
+		counter++;
+	}
+
+	if (!onCorrectPlaneSide(glm::vec3(leaf.maxLeafBox.x, leaf.minLeafBox.y, leaf.maxLeafBox.z), normal, point)) {
+		counter++;
+	}
+
+	if (!onCorrectPlaneSide(glm::vec3(leaf.maxLeafBox.x, leaf.maxLeafBox.y, leaf.minLeafBox.z), normal, point)) {
+		counter++;
+	}
+
+	if (counter == 0) {
+		return 0;
+	}
+
+	if (counter == 8) {
+		return 1;
+	}
+
+	return 2;
+}
+
+void PC_Viewer::cullWithViewFrustrum(OctreeBoxViewer& leaf, viewFrustrum& vF)
+{
+	int partiallyInside = 0;
+	int inOutTest = -1;
+
+	//1
+	inOutTest = boxFrstrumCull(leaf, vF.farNormal, vF.farPoint);
+	if (inOutTest == 1) {
+		//Box is compeltely outside of a plane, we can stop here
+		return;
+	}
+	else if (inOutTest == 2) {
+		//Box is partly inside the frustrum (if its not the leave yet keep splitting, else just take the entire box)
+		if (leaf.childs.size() == 0) {
+			//this->addBoxToDraw(leaf, glm::vec3(1.0f, 0.0f, 0.0f));
+			partiallyInside++;
+		}
+		else {
+			for (int i = 0; i < leaf.childs.size(); i++) {
+				cullWithViewFrustrum(*leaf.childs[i], vF);
+			}
+			return;
+		}
+	}
+
+	//2
+	inOutTest = boxFrstrumCull(leaf, vF.nearNormal, vF.nearPoint);
+	if (inOutTest == 1) {
+		//Box is compeltely outside of a plane, we can stop here
+		return;
+	}
+	else if (inOutTest == 2) {
+		//Box is partly inside the frustrum (if its not the leave yet keep splitting, else just take the entire box)
+		if (leaf.childs.size() == 0) {
+			//this->addBoxToDraw(leaf, glm::vec3(1.0f, 0.0f, 0.0f));
+			partiallyInside++;
+		}
+		else {
+			for (int i = 0; i < leaf.childs.size(); i++) {
+				cullWithViewFrustrum(*leaf.childs[i], vF);
+			}
+			return;
+		}
+	}
+
+	//3
+	inOutTest = boxFrstrumCull(leaf, vF.leftNormal, vF.leftPoint);
+	if (inOutTest == 1) {
+		//Box is compeltely outside of a plane, we can stop here
+		return;
+	}
+	else if (inOutTest == 2) {
+		//Box is partly inside the frustrum (if its not the leave yet keep splitting, else just take the entire box)
+		if (leaf.childs.size() == 0) {
+			//this->addBoxToDraw(leaf, glm::vec3(1.0f, 0.0f, 0.0f));
+			partiallyInside++;
+		}
+		else {
+			for (int i = 0; i < leaf.childs.size(); i++) {
+				cullWithViewFrustrum(*leaf.childs[i], vF);
+			}
+			return;
+		}
+	}
+
+	//4
+	inOutTest = boxFrstrumCull(leaf, vF.rightNormal, vF.rightPoint);
+	if (inOutTest == 1) {
+		//Box is compeltely outside of a plane, we can stop here
+		return;
+	}
+	else if (inOutTest == 2) {
+		//Box is partly inside the frustrum (if its not the leave yet keep splitting, else just take the entire box)
+		if (leaf.childs.size() == 0) {
+			//this->addBoxToDraw(leaf, glm::vec3(1.0f, 0.0f, 0.0f));
+			partiallyInside++;
+		}
+		else {
+			for (int i = 0; i < leaf.childs.size(); i++) {
+				cullWithViewFrustrum(*leaf.childs[i], vF);
+			}
+			return;
+		}
+	}
+
+
+	//5
+	inOutTest = boxFrstrumCull(leaf, vF.upNormal, vF.upPoint);
+	if (inOutTest == 1) {
+		//Box is compeltely outside of a plane, we can stop here
+		return;
+	}
+	else if (inOutTest == 2) {
+		//Box is partly inside the frustrum (if its not the leave yet keep splitting, else just take the entire box)
+		if (leaf.childs.size() == 0) {
+			//this->addBoxToDraw(leaf, glm::vec3(1.0f, 0.0f, 0.0f));
+			partiallyInside++;
+		}
+		else {
+			for (int i = 0; i < leaf.childs.size(); i++) {
+				cullWithViewFrustrum(*leaf.childs[i], vF);
+			}
+			return;
+		}
+	}
+
+	//6
+	inOutTest = boxFrstrumCull(leaf, vF.downNormal, vF.downPoint);
+	if (inOutTest == 1) {
+		//Box is compeltely outside of a plane, we can stop here
+		return;
+	}
+	else if (inOutTest == 2) {
+		//Box is partly inside the frustrum (if its not the leave yet keep splitting, else just take the entire box)
+		if (leaf.childs.size() == 0) {
+			//this->addBoxToDraw(leaf, glm::vec3(1.0f, 0.0f, 0.0f));
+			partiallyInside++;
+		}
+		else {
+			for (int i = 0; i < leaf.childs.size(); i++) {
+				cullWithViewFrustrum(*leaf.childs[i], vF);
+			}
+			return;
+		}
+	}
+
+	//Box inside Frsutrum 
+	//ToDo: Check Lod and insert into draw array if necessary
+	return;
 }
