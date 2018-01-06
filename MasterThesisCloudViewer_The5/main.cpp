@@ -395,6 +395,17 @@ void loadShader(bool init) {
 Scenes: Unit cube + Pointcloud
 ********************************************************************************************************* */
 void PixelScene() {
+	/* ********************************************
+	Print
+	**********************************************/
+	if (print) {
+		print = false;
+		std::cout << "Start printing" << std::endl;
+		//viewer->printOctree(viewer->root, "r");
+		viewer->printOctreeWithLOD(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position));
+
+	}
+
 	//Clear
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);

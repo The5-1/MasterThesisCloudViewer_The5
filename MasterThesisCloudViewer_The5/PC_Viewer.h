@@ -11,6 +11,9 @@
 
 #include <bitset>
 #include <vector>
+#include <queue>          // std::queue
+
+#include "helper.h"
 
 struct OctreeBoxViewer {
 public:
@@ -18,25 +21,31 @@ public:
 	unsigned char bitMaskChar = 0;
 	glm::vec3 minLeafBox, maxLeafBox;
 
-	//std::vector<OctreeBoxViewer> childs;
 	std::vector<OctreeBoxViewer*> childs;
+
+	bool drawn = false;
 
 public:
 
 	OctreeBoxViewer()
 	{
-		//std::cout << "childs size: " << childs.size() << std::endl;
-		//childs = std::vector<OctreeBox>(0);
-		//std::cout << "childs size: " << childs.size() << std::endl;
 	}
 
 	//~OctreeBoxViewer() = default;
+};
+
+struct DynamicVBOloader {
+	OctreeBoxViewer* octree;
+	std::string name;
+	float lod;
 };
 
 class PC_Viewer
 {
 	//Variables
 public:
+	float customScale = 0.15f;
+
 	OctreeBoxViewer root;
 
 	std::string pathFolder; //"D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree"
@@ -51,17 +60,23 @@ public:
 	double boundingBoxMaxY = 1363747.3969999999;
 	double boundingBoxMaxZ = 1460.3479999998772;
 
-	double spacing = 3.742035150527954;	 //3.742035150527954,
-	float scale = 0.01f;	//	0.01,
-	int hierarchyStepSize = 5; // 5
+	double spacing = 3.742035150527954;
+	float scale = 0.01f;
+	int hierarchyStepSize = 5;
 
 	//GL Point Cloud
 	GLuint vboPC[2];
 	std::vector<glm::vec3> pcVertices;
 	std::vector<glm::vec3> pcColors;
 
+	/*************
+	Dynamic VBO loader
+	*************/
 	std::vector<GLuint> dynamicOctreeVBOs;
+	std::vector<std::string> dynamicOctreeNames;
+	std::vector<DynamicVBOloader> dynamicLoaders;
 	unsigned int dynamicMaxVertices = 2000000;
+
 
 	//GL Box Variables
 	GLuint vboBox[2];
@@ -91,19 +106,22 @@ public:
 
 	void dynamicSetMaximumVertices(unsigned int _max);
 
-	void dynamicOctreeVBOs(unsigned int _max);
+	void dynamicSetOctreeVBOs(unsigned int _max);
 
 	bool onCorrectPlaneSide(glm::vec3 & corner, glm::vec3 & normal, glm::vec3 & point);
 
 	int boxFrstrumCull(OctreeBoxViewer & leaf, glm::vec3 & normal, glm::vec3 & point);
 
-	void cullWithViewFrustrum(OctreeBoxViewer & leaf, viewFrustrum & vF);
+	bool cullWithViewFrustrum(OctreeBoxViewer & leaf, viewFrustrum & vF);
+
+	void dynamicVBOload(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, float minimumLOD);
 
 public:
 	void getLeafNames(std::string currentLeafName);
 	void readCloudJs(std::string filename);
 	void readHrcFile(std::string filename);
 	void printOctree(OctreeBoxViewer level, std::string levelString);
+	void printOctreeWithLOD(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos);
 	void setBoundingBoxLevels(OctreeBoxViewer level);
 	
 	void loadAllPointsFromLevelToLeafs(OctreeBoxViewer level, std::string levelString);
