@@ -3,6 +3,7 @@
 #include <iterator>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 
 #include <glm\glm.hpp>
 #include <glm/gtc/matrix_transform.hpp> 
@@ -12,7 +13,7 @@
 #include <bitset>
 #include <vector>
 #include <queue>          // std::queue
-
+#include <algorithm>    // std::sort
 #include "helper.h"
 
 struct OctreeBoxViewer {
@@ -24,6 +25,7 @@ public:
 	std::vector<OctreeBoxViewer*> childs;
 
 	bool drawn = false;
+	int vboID = -1;
 
 public:
 
@@ -38,6 +40,24 @@ struct DynamicVBOloader {
 	OctreeBoxViewer* octree;
 	std::string name;
 	float lod;
+
+	DynamicVBOloader() {};
+	DynamicVBOloader(OctreeBoxViewer* _octree, std::string _name, float _lod) {
+		this->octree = _octree;
+		this->name = _name;
+		this->lod = _lod;
+	}
+
+	bool operator<(const DynamicVBOloader& a) const
+	{
+		return lod < a.lod;
+	}
+
+	//Overload << in struct: https://stackoverflow.com/questions/16291623/operator-overloading-c-too-many-parameters-for-operation
+	friend std::ostream& operator<<(ostream& os, const DynamicVBOloader& loader) {
+		return os << "Name: " << loader.name << " with LOD " << loader.lod; 
+	}
+
 };
 
 class PC_Viewer
@@ -75,6 +95,8 @@ public:
 	std::vector<GLuint> dynamicOctreeVBOs;
 	std::vector<std::string> dynamicOctreeNames;
 	std::vector<DynamicVBOloader> dynamicLoaders;
+	std::queue<int> dynamicQueue;
+
 	unsigned int dynamicMaxVertices = 2000000;
 
 
@@ -114,7 +136,11 @@ public:
 
 	bool cullWithViewFrustrum(OctreeBoxViewer & leaf, viewFrustrum & vF);
 
-	void dynamicVBOload(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, float minimumLOD);
+	void dynamicStartLoad(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD);
+
+	void dynamicVBOload(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD);
+
+	void printLoaders();
 
 public:
 	void getLeafNames(std::string currentLeafName);

@@ -179,6 +179,8 @@ typedef enum { INDEX, ALL } DRAW_TYPE; DRAW_TYPE m_splatDraw = INDEX;
 int index0 = 0, index1 = 0, index2 = 0;
 bool refresh = false;
 bool print = false;
+bool printDynamic = false;
+
 /* *********************************************************************************************************
 TweakBar
 ********************************************************************************************************* */
@@ -200,6 +202,9 @@ void setupTweakBar() {
 
 	TwAddSeparator(tweakBar, "Help", nullptr);
 	TwAddVarRW(tweakBar, "Print", TW_TYPE_BOOLCPP, &print, " label='Print' ");
+
+	TwAddSeparator(tweakBar, "Dynamic-Load Print", nullptr);
+	TwAddVarRW(tweakBar, "Print Dynamic", TW_TYPE_BOOLCPP, &printDynamic, " label='Print Dynamic' ");
 }
 
 /* *********************************************************************************************************
@@ -503,6 +508,17 @@ void display() {
 			viewer->uploadPointCloud();
 		}
 		PixelScene();
+	}
+
+	if (printDynamic) {
+		printDynamic = false;
+
+		viewfrustrum->change(glm::mat4(1.0f), viewMatrix, projMatrix);
+		viewfrustrum->getPlaneNormal(false);
+		viewfrustrum->upload();
+
+		viewer->dynamicVBOload(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position), *viewfrustrum, 0.0f);
+		viewer->printLoaders();
 	}
 
 	TwDraw(); //Draw Tweak-Bar

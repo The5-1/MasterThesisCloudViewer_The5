@@ -635,11 +635,19 @@ void PC_Viewer::dynamicSetMaximumVertices(unsigned int _max) {
 
 void PC_Viewer::dynamicSetOctreeVBOs(unsigned int _max) {
 	glDeleteBuffers(this->dynamicOctreeVBOs.size(), this->dynamicOctreeVBOs.data());
-
 	this->dynamicOctreeVBOs.resize(_max);
-	this->dynamicOctreeNames.resize(_max);
-
 	glGenBuffers(this->dynamicOctreeVBOs.size(), this->dynamicOctreeVBOs.data());
+
+	this->dynamicLoaders.clear();
+	this->dynamicLoaders.resize(_max);
+
+	//for (int i = 0; i < this->dynamicQueue.size(); i++) {
+	//	this->dynamicQueue.pop();
+	//}
+	//
+	//for (int i = 0; i < _max; i++) {
+	//	this->dynamicQueue.push(i);
+	//}
 }
 
 bool PC_Viewer::onCorrectPlaneSide(glm::vec3& corner, glm::vec3& normal, glm::vec3& point) {
@@ -832,7 +840,15 @@ bool PC_Viewer::cullWithViewFrustrum(OctreeBoxViewer& leaf, viewFrustrum& vF)
 	return true;
 }
 
-void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, float minimumLOD) {
+void PC_Viewer::dynamicStartLoad(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum& vF, float minimumLOD) {
+
+	this->dynamicLoaders.clear();
+	this->dynamicVBOload(level, levelString, fov, screenHeight, camPos, vF, minimumLOD);
+
+	std::sort(this->dynamicLoaders.begin(), this->dynamicLoaders.end());
+}
+
+void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum& vF, float minimumLOD) {
 	std::bitset<8> bitMask;
 	int numLeafs = 0;
 
@@ -849,15 +865,22 @@ void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, f
 
 	float projectedSize = (screenHeight / 2) * (radius / (slope * distance));;
 
-	if (projectedSize > minimumLOD) {
-	
+	if (projectedSize > minimumLOD && cullWithViewFrustrum(level, vF)) {
+		this->dynamicLoaders.push_back(DynamicVBOloader(&level, levelString, projectedSize));
 	}
 
 	for (int i = 0; i < 8; i++) {
 		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
 		if (bitMask[i] == 1) {
-			this->printOctreeWithLOD(*level.childs[numLeafs], levelString + std::to_string(i), fov, screenHeight, camPos);
+			this->dynamicVBOload(*level.childs[numLeafs], levelString + std::to_string(i), fov, screenHeight, camPos, vF, minimumLOD);
 			numLeafs++;
 		}
+	}
+}
+
+void PC_Viewer::printLoaders() {
+	std::cout << "Print loaders: " << std::endl;
+	for (int i = 0; i < dynamicLoaders.size(); i++) {
+		std::cout << this->dynamicLoaders[i] << std::endl;
 	}
 }
