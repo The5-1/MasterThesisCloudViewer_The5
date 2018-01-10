@@ -525,7 +525,7 @@ void dynamicPixelScene() {
 	pixelShader.uniform("glPointSize", glPointSizeFloat);
 
 	viewer->dynamicStartLoad(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position), *viewfrustrum, 0.0f);
-	viewer->dynamicDraw();
+	//viewer->dynamicDraw();
 
 	pixelShader.disable();
 	glDisable(GL_POINT_SPRITE);

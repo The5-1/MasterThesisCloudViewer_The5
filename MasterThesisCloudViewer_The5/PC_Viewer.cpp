@@ -342,8 +342,8 @@ void PC_Viewer::loadIndexedPointsFromLevelToLeafs(OctreeBoxViewer level, std::st
 }
 
 void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
-	std::ifstream file_to_open(filename, std::ios::binary);
 
+	std::ifstream file_to_open(filename, std::ios::binary);
 	float fileScale = 0.01f;
 
 	if (file_to_open.is_open()) {
@@ -426,14 +426,6 @@ void PC_Viewer::readBinaryFile(std::string filename, glm::vec3 boundingBoxMin) {
 			float Yf = (float)Yd;
 			float Zf = (float)Zd;
 			*/
-
-			/******
-			Swap
-			*******/
-			//float temp;
-			//temp = Yf;
-			//Zf = Yf;
-			//Yf = temp;
 
 			//Write results in temp vector
 			this->pcVertices.push_back(glm::vec3(Xf, Yf, Zf));
@@ -845,53 +837,60 @@ void PC_Viewer::dynamicStartLoad(OctreeBoxViewer level, std::string levelString,
 
 	std::cout << "dynamicVBOload start" << std::endl;
 	this->dynamicVBOload(level, levelString, fov, screenHeight, camPos, vF, minimumLOD);
+	for (int i = 0; i < this->dynamicLoaders.size(); i++) {
+		std::cout << "--- pointer after dynamicVBOload " << this->dynamicLoaders[i].octree->vboID << std::endl;
+	}
 	std::cout << "dynamicVBOload end" << std::endl;
 
 	std::sort(this->dynamicLoaders.begin(), this->dynamicLoaders.end());
 
+	std::cout << "dynamicLoaders.size " << this->dynamicLoaders.size() << std::endl;
+	std::cout << "this->dynamicOctreeVBOs.size() " << this->dynamicOctreeVBOs.size() << std::endl;
+
 	int max = this->dynamicOctreeVBOs.size() / 2;
+	int offsetVBO = max;
 
 	//Deactivate all loaders which we dont want to draw anymore
-	if (this->dynamicLoaders.size() > max) {
-		for (int i = max; i < this->dynamicLoaders.size(); i++) {
-			if (this->dynamicLoaders[i].octree->drawn) {
-				this->dynamicLoaders[i].octree->drawn = false;
-				this->dynamicQueue.push(this->dynamicLoaders[i].octree->vboID);
-				this->dynamicLoaders[i].octree->vboID = -1;
-			}
-		}
-	}
+	//if (this->dynamicLoaders.size() > max) {
+	//	for (int i = max; i < this->dynamicLoaders.size(); i++) {
+	//		if (this->dynamicLoaders[i].octree->drawn) {
+	//			this->dynamicLoaders[i].octree->drawn = false;
+	//			this->dynamicQueue.push(this->dynamicLoaders[i].octree->vboID);
+	//			this->dynamicLoaders[i].octree->vboID = -1;
+	//		}
+	//	}
+	//}
 
 	max = std::min<int>(max, this->dynamicLoaders.size());
-	//std::cout << "After sort" << std::endl;
-	//	int _max = this->dynamicOctreeVBOs.size() / 2;
-	//	for (int i = 0; i < _max; i++) {
-	//	std::cout << this->dynamicQueue.front() << std::endl;
-	//	this->dynamicQueue.pop();
-	//}
 
 	if (this->dynamicQueue.size() > 0) {
 		for (int i = 0; i < max; i++) {
 			std::cout << "i: " << i << std::endl;
 			this->dynamicLoaders[i].octree->drawn = true;
+			std::cout << "this->dynamicLoaders[i].octree->vboID: " << this->dynamicLoaders[i].octree->vboID << " Queue: " << this->dynamicQueue.front() << std::endl;
 			this->dynamicLoaders[i].octree->vboID = this->dynamicQueue.front();
 			std::cout << "this->dynamicLoaders[i].octree->vboID: " << this->dynamicLoaders[i].octree->vboID << " Queue: "  << this->dynamicQueue.front()  << std::endl;
+
 			this->dynamicQueue.pop();
+			std::cout << "this->dynamicLoaders[i].octree->vboID: " << this->dynamicLoaders[i].octree->vboID << " Queue: " << this->dynamicQueue.front() << std::endl;
 
 			this->pcColors.clear();
 			this->pcVertices.clear();
-			this->readBinaryFile(this->pathFolder + "/data/r/" + this->dynamicLoaders[i].name + ".bin", this->dynamicLoaders[i].octree->minLeafBox);
+			std::cout << "this->dynamicLoaders[i].octree->vboID: " << this->dynamicLoaders[i].octree->vboID << " Queue: " << this->dynamicQueue.front() << std::endl;
 
-			
+			std::string treePath = this->pathFolder + "/data/r/" + this->dynamicLoaders[i].name + ".bin";
+			glm::vec3 treeMinLeaf = this->dynamicLoaders[i].octree->minLeafBox;
+			this->readBinaryFile(treePath, treeMinLeaf);
+			std::cout << "this->dynamicLoaders[i].octree->vboID: " << this->dynamicLoaders[i].octree->vboID << " Queue: " << this->dynamicQueue.front() << std::endl;
 
 			this->dynamicLoaders[i].numPoints = this->pcVertices.size();
+			std::cout << "this->dynamicLoaders[i].octree->vboID: " << this->dynamicLoaders[i].octree->vboID << " Queue: " << this->dynamicQueue.front() << std::endl;
 
-			std::cout << "Test " << std::endl;
-
+			std::cout << "Test " << this->dynamicLoaders[i].octree->vboID << std::endl;
 			glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[this->dynamicLoaders[i].octree->vboID ]);
 			glBufferData(GL_ARRAY_BUFFER, this->pcVertices.size() * sizeof(float) * 3, this->pcVertices.data(), GL_STATIC_DRAW);
 
-			glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[this->dynamicLoaders[i].octree->vboID + max]);
+			glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[this->dynamicLoaders[i].octree->vboID + offsetVBO]);
 			glBufferData(GL_ARRAY_BUFFER, this->pcColors.size() * sizeof(float) * 3, this->pcColors.data(), GL_STATIC_DRAW);
 
 			std::cout << "Test " << std::endl;
@@ -916,10 +915,13 @@ void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, f
 	float projectedSize = (screenHeight / 2) * (radius / (slope * distance));;
 
 	if (projectedSize > minimumLOD && cullWithViewFrustrum(level, vF)) {
+		std::cout << "dynamicVBOload: " << level.vboID << std::endl;
 		this->dynamicLoaders.push_back(DynamicVBOloader(&level, levelString, projectedSize));
+		std::cout << "dynamicVBOload Pointer: " << this->dynamicLoaders[this->dynamicLoaders.size() - 1].octree->vboID << std::endl;
 	}
 	else {
 		if (level.drawn) {
+			std::cout << "dynamicVBOload Level not drawn anymore: " << level.vboID << " pushed back into queue" << std::endl;
 			int max = this->dynamicOctreeVBOs.size() / 2;
 
 			level.drawn = false;
@@ -986,6 +988,8 @@ void PC_Viewer::dynamicDraw() {
 
 	//	glDrawArrays(GL_POINTS, 0, this->dynamicLoaders[i].numPoints);
 	//}
+
+	std::cout << "!!! Start Drawing" << std::endl;
 
 	for (int i = 0; i < max; i++) {
 		glEnableVertexAttribArray(0);

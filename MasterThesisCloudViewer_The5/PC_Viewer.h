@@ -31,6 +31,9 @@ public:
 
 	OctreeBoxViewer()
 	{
+		this->drawn = false;
+		this->vboID = -1;
+
 	}
 
 	//~OctreeBoxViewer() = default;
