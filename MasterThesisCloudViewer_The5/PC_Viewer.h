@@ -40,12 +40,14 @@ struct DynamicVBOloader {
 	OctreeBoxViewer* octree;
 	std::string name;
 	float lod;
+	int numPoints;
 
 	DynamicVBOloader() {};
 	DynamicVBOloader(OctreeBoxViewer* _octree, std::string _name, float _lod) {
 		this->octree = _octree;
 		this->name = _name;
 		this->lod = _lod;
+		this->numPoints = 0;
 	}
 
 	bool operator<(const DynamicVBOloader& a) const
@@ -54,6 +56,7 @@ struct DynamicVBOloader {
 	}
 
 	//Overload << in struct: https://stackoverflow.com/questions/16291623/operator-overloading-c-too-many-parameters-for-operation
+	// the non-member function operator<< will have access to DynamicVBOloader's private members
 	friend std::ostream& operator<<(ostream& os, const DynamicVBOloader& loader) {
 		return os << "Name: " << loader.name << " with LOD " << loader.lod; 
 	}
@@ -126,9 +129,9 @@ public:
 
 	void octreeModelMatrix(OctreeBoxViewer level, std::vector<glm::mat4>& modelMatrixBox);
 
-	void dynamicSetMaximumVertices(unsigned int _max);
+	void dynamicSetMaximumVertices(int _max);
 
-	void dynamicSetOctreeVBOs(unsigned int _max);
+	void dynamicSetOctreeVBOs(int _max);
 
 	bool onCorrectPlaneSide(glm::vec3 & corner, glm::vec3 & normal, glm::vec3 & point);
 
@@ -141,6 +144,8 @@ public:
 	void dynamicVBOload(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD);
 
 	void printLoaders();
+
+	void dynamicDraw();
 
 public:
 	void getLeafNames(std::string currentLeafName);

@@ -175,7 +175,7 @@ void drawFBO(FBO *_fbo) {
 	standardMiniColorFboShader.disable();
 }
 
-typedef enum { INDEX, ALL } DRAW_TYPE; DRAW_TYPE m_splatDraw = INDEX;
+typedef enum { INDEX, ALL, DYNAMIC } DRAW_TYPE; DRAW_TYPE m_splatDraw = INDEX;
 int index0 = 0, index1 = 0, index2 = 0;
 bool refresh = false;
 bool print = false;
@@ -188,8 +188,8 @@ void setupTweakBar() {
 	TwInit(TW_OPENGL_CORE, NULL);
 	tweakBar = TwNewBar("Settings");
 
-	TwEnumVal Draw[] = { { INDEX, "INDEX" },{ ALL, "ALL" } };
-	TwType SplatsTwType = TwDefineEnum("DrawType", Draw, 2);
+	TwEnumVal Draw[] = { { INDEX, "INDEX" },{ ALL, "ALL" },{ DYNAMIC , "DYNAMIC"} };
+	TwType SplatsTwType = TwDefineEnum("DrawType", Draw, 3);
 	TwAddVarRW(tweakBar, "Splats", SplatsTwType, &m_splatDraw, NULL);
 
 	TwAddVarRW(tweakBar, "Index0", TW_TYPE_INT32, &index0, " label='Index0' min=-1 step=1 max=7");
@@ -270,6 +270,7 @@ void init() {
 	*****************************************************************/
 	viewer = new PC_Viewer("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree");
 	viewer->octreeModelMatrix(viewer->root, modelMatrixOctree);
+	viewer->dynamicSetOctreeVBOs(5);
 
 	//binaryDraw = new BinaryReadDraw("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree/data/r/r024.bin");
 	//binaryDraw->upload();
@@ -406,9 +407,7 @@ void PixelScene() {
 	if (print) {
 		print = false;
 		std::cout << "Start printing" << std::endl;
-		//viewer->printOctree(viewer->root, "r");
 		viewer->printOctreeWithLOD(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position));
-
 	}
 
 	//Clear
@@ -468,6 +467,72 @@ void PixelScene() {
 
 }
 
+void dynamicPixelScene() {
+	/* ********************************************
+	Print
+	**********************************************/
+	if (print) {
+		print = false;
+		std::cout << "Start printing" << std::endl;
+		viewer->printOctreeWithLOD(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position));
+	}
+
+	//Clear
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+
+	glDisable(GL_CULL_FACE);
+
+	/* ********************************************
+	Coordinate System
+	**********************************************/
+	basicColorShader.enable();
+	glm::mat4 modelMatrix = glm::scale(glm::vec3(1.0f));
+	basicColorShader.uniform("modelMatrix", modelMatrix);
+	basicColorShader.uniform("viewMatrix", viewMatrix);
+	basicColorShader.uniform("projMatrix", projMatrix);
+	coordSysstem->draw();
+	basicColorShader.disable();
+
+
+	/* ********************************************
+	Octree Boxes
+	**********************************************/
+	basicShader.enable();
+	basicShader.uniform("viewMatrix", viewMatrix);
+	basicShader.uniform("projMatrix", projMatrix);
+
+	for (int i = 0; i < modelMatrixOctree.size(); i++) {
+		basicShader.uniform("modelMatrix", modelMatrixOctree[i]);
+		basicShader.uniform("col", glm::vec3(1.0f, 0.4f, 0.7f));
+		viewer->drawBox();
+	}
+	basicShader.disable();
+
+	/* ********************************************
+	Pointcloud
+	**********************************************/
+	glEnable(GL_POINT_SPRITE);
+	glEnable(GL_PROGRAM_POINT_SIZE);
+
+	pixelShader.enable();
+
+
+	pixelShader.uniform("viewMatrix", viewMatrix);
+	pixelShader.uniform("projMatrix", projMatrix);
+
+	pixelShader.uniform("glPointSize", glPointSizeFloat);
+
+	viewer->dynamicStartLoad(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position), *viewfrustrum, 0.0f);
+	viewer->dynamicDraw();
+
+	pixelShader.disable();
+	glDisable(GL_POINT_SPRITE);
+	glDisable(GL_PROGRAM_POINT_SIZE);
+
+}
+
 /* *********************************************************************************************************
 Display + Main
 ********************************************************************************************************* */
@@ -509,17 +574,23 @@ void display() {
 		}
 		PixelScene();
 	}
-
-	if (printDynamic) {
-		printDynamic = false;
-
+	else if (m_splatDraw = DYNAMIC) {
 		viewfrustrum->change(glm::mat4(1.0f), viewMatrix, projMatrix);
 		viewfrustrum->getPlaneNormal(false);
 		viewfrustrum->upload();
 
-		viewer->dynamicVBOload(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position), *viewfrustrum, 0.0f);
-		viewer->printLoaders();
+		dynamicPixelScene();
+
+		if (printDynamic) {
+			printDynamic = false;
+			//viewer->dynamicVBOload(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position), *viewfrustrum, 0.0f);
+			viewer->printLoaders();
+		}
+
+
 	}
+
+	
 
 	TwDraw(); //Draw Tweak-Bar
 
