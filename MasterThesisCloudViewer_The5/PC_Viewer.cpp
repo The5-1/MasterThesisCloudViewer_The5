@@ -8,7 +8,7 @@ PC_Viewer::PC_Viewer()
 
 PC_Viewer::PC_Viewer(std::string _pathFolder)
 {
-	std::cout << "count of root->childs: " << this->root.childs.size() << std::endl;
+	//std::cout << "count of root->childs: " << this->root.childs.size() << std::endl;
 
 	this->pathFolder = _pathFolder; //"D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree"
 	
@@ -102,9 +102,9 @@ void PC_Viewer::readCloudJs(std::string filename) {
 	//fclose(file);
 }
 
-/*
+/***********
 Used to construct the octree
-*/
+***********/
 void PC_Viewer::readHrcFile(std::string filename) {
 	std::ifstream file_to_open(filename, std::ios::binary);
 	unsigned long int numPoints;
@@ -632,9 +632,6 @@ void PC_Viewer::dynamicSetOctreeVBOs(int _max) {
 
 	glGenBuffers(this->dynamicOctreeVBOs.size(), this->dynamicOctreeVBOs.data());
 
-	//this->dynamicLoaders.clear();
-	//this->dynamicLoaders.resize(_max);
-
 	for (int i = 0; i < _max; i++) {
 		this->dynamicQueue.push(i);
 	}
@@ -837,9 +834,12 @@ void PC_Viewer::dynamicStartLoad(OctreeBoxViewer level, std::string levelString,
 
 	std::cout << "dynamicVBOload start" << std::endl;
 	this->dynamicVBOload(level, levelString, fov, screenHeight, camPos, vF, minimumLOD);
+
 	for (int i = 0; i < this->dynamicLoaders.size(); i++) {
 		std::cout << "--- pointer after dynamicVBOload " << this->dynamicLoaders[i].octree->vboID << std::endl;
 	}
+
+
 	std::cout << "dynamicVBOload end" << std::endl;
 
 	std::sort(this->dynamicLoaders.begin(), this->dynamicLoaders.end());
@@ -851,15 +851,16 @@ void PC_Viewer::dynamicStartLoad(OctreeBoxViewer level, std::string levelString,
 	int offsetVBO = max;
 
 	//Deactivate all loaders which we dont want to draw anymore
-	//if (this->dynamicLoaders.size() > max) {
-	//	for (int i = max; i < this->dynamicLoaders.size(); i++) {
-	//		if (this->dynamicLoaders[i].octree->drawn) {
-	//			this->dynamicLoaders[i].octree->drawn = false;
-	//			this->dynamicQueue.push(this->dynamicLoaders[i].octree->vboID);
-	//			this->dynamicLoaders[i].octree->vboID = -1;
-	//		}
-	//	}
-	//}
+	if (this->dynamicLoaders.size() > max) {
+		for (int i = max; i < this->dynamicLoaders.size(); i++) {
+			if (this->dynamicLoaders[i].octree->drawn) {
+				std::cout << "!!! Draw was true" << std::endl;
+				this->dynamicLoaders[i].octree->drawn = false;
+				this->dynamicQueue.push(this->dynamicLoaders[i].octree->vboID);
+				this->dynamicLoaders[i].octree->vboID = -1;
+			}
+		}
+	}
 
 	max = std::min<int>(max, this->dynamicLoaders.size());
 
@@ -916,7 +917,7 @@ void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, f
 
 	if (projectedSize > minimumLOD && cullWithViewFrustrum(level, vF)) {
 		std::cout << "dynamicVBOload: " << level.vboID << std::endl;
-		this->dynamicLoaders.push_back(DynamicVBOloader(&level, levelString, projectedSize));
+		this->dynamicLoaders.push_back(DynamicVBOloader(level, levelString, projectedSize));
 		std::cout << "dynamicVBOload Pointer: " << this->dynamicLoaders[this->dynamicLoaders.size() - 1].octree->vboID << std::endl;
 	}
 	else {
@@ -948,11 +949,10 @@ void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, f
 		}
 	}
 
-	/*int _max = this->dynamicOctreeVBOs.size() / 2;
-	for (int i = 0; i < _max; i++) {
-		std::cout << this->dynamicQueue.front() << std::endl;
-		this->dynamicQueue.pop();
-	}*/
+	for (int i = 0; i < this->dynamicLoaders.size(); i++) {
+		std::cout << "+++ pointer after dynamicVBOload " << this->dynamicLoaders[i].name  << ", "<< this->dynamicLoaders[i].octree->vboID << std::endl;
+		//std::cout << "+++ pointer after dynamicVBOload " << this->dynamicLoaders[i].octree->debugName << ", " << this->dynamicLoaders[i].octree->vboID << std::endl;
+	}
 }
 
 void PC_Viewer::printLoaders() {
@@ -1003,4 +1003,37 @@ void PC_Viewer::dynamicDraw() {
 		glDrawArrays(GL_POINTS, 0, this->dynamicLoaders[i].numPoints);
 	}
 
+}
+
+
+/***********
+Cheap load (Always relaods, only usable for small data)
+***********/
+void PC_Viewer::fastStartLoad(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum& vF, float minimumLOD) {
+	//Helper
+	std::bitset<8> bitMask;
+	int numLeafs = 0;
+
+	//Lod
+	float angle = 2.0f * glm::pi<float>() * (fov / 360.0f);
+	float slope = glm::tan(angle / 2.0f);
+	glm::vec3 midpoint = level.minLeafBox + (level.maxLeafBox - level.minLeafBox);
+	float radius = 0.5f * glm::length(level.maxLeafBox - level.minLeafBox);
+	float distance = glm::length(midpoint - camPos);
+	float projectedSize = (screenHeight / 2) * (radius / (slope * distance));;
+
+	if (projectedSize > minimumLOD && cullWithViewFrustrum(level, vF)) {
+	
+	}
+
+	for (int i = 0; i < 8; i++) {
+		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
+		if (bitMask[i] == 1) {
+			this->fastStartLoad(*level.childs[numLeafs], levelString + std::to_string(i), fov, screenHeight, camPos, vF, minimumLOD);
+			numLeafs++;
+		}
+	}
+
+
+	this->pathFolder + "/data/r/" + levelString + ".bin";
 }

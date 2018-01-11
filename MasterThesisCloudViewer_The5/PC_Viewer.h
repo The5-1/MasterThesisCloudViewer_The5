@@ -12,7 +12,7 @@
 
 #include <bitset>
 #include <vector>
-#include <queue>          // std::queue
+#include <queue>        // std::queue
 #include <algorithm>    // std::sort
 #include "helper.h"
 
@@ -27,13 +27,14 @@ public:
 	bool drawn = false;
 	int vboID = -1;
 
+	//std::string debugName = "Hallo";
+
 public:
 
 	OctreeBoxViewer()
 	{
 		this->drawn = false;
 		this->vboID = -1;
-
 	}
 
 	//~OctreeBoxViewer() = default;
@@ -46,8 +47,8 @@ struct DynamicVBOloader {
 	int numPoints;
 
 	DynamicVBOloader() {};
-	DynamicVBOloader(OctreeBoxViewer* _octree, std::string _name, float _lod) {
-		this->octree = _octree;
+	DynamicVBOloader(OctreeBoxViewer& _octree, std::string _name, float _lod) {
+		this->octree = &_octree;
 		this->name = _name;
 		this->lod = _lod;
 		this->numPoints = 0;
@@ -149,6 +150,8 @@ public:
 	void printLoaders();
 
 	void dynamicDraw();
+
+	void fastStartLoad(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD);
 
 public:
 	void getLeafNames(std::string currentLeafName);
