@@ -269,7 +269,7 @@ void init() {
 	PointClouds
 	*****************************************************************/
 	viewer = new PC_Viewer("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree");
-	viewer->octreeModelMatrix(viewer->root, modelMatrixOctree);
+	viewer->octreeModelMatrix(*viewer->root, modelMatrixOctree);
 	viewer->dynamicSetOctreeVBOs(5);
 
 	//binaryDraw = new BinaryReadDraw("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree/data/r/r024.bin");
@@ -407,7 +407,7 @@ void PixelScene() {
 	if (print) {
 		print = false;
 		std::cout << "Start printing" << std::endl;
-		viewer->printOctreeWithLOD(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position));
+		viewer->printOctreeWithLOD(*viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position));
 	}
 
 	//Clear
@@ -474,7 +474,7 @@ void dynamicPixelScene() {
 	if (print) {
 		print = false;
 		std::cout << "Start printing" << std::endl;
-		viewer->printOctreeWithLOD(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position));
+		viewer->printOctreeWithLOD(*viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position));
 	}
 
 	//Clear
@@ -524,7 +524,7 @@ void dynamicPixelScene() {
 
 	pixelShader.uniform("glPointSize", glPointSizeFloat);
 
-	viewer->dynamicStartLoad(viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position), *viewfrustrum, 0.0f);
+	viewer->dynamicStartLoad(*viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position), *viewfrustrum, 0.0f);
 	//viewer->dynamicDraw();
 
 	pixelShader.disable();
@@ -556,7 +556,7 @@ void display() {
 			viewer->pcVertices.clear();
 			viewer->pcColors.clear();
 
-			viewer->loadAllPointsFromLevelToLeafs(viewer->root, "r");
+			viewer->loadAllPointsFromLevelToLeafs(*viewer->root, "r");
 			viewer->uploadPointCloud();
 		}
 		PixelScene();
@@ -569,7 +569,7 @@ void display() {
 			viewer->pcVertices.clear();
 			viewer->pcColors.clear();
 
-			viewer->loadIndexedPointsFromLevelToLeafs(viewer->root, "r", indexSet);
+			viewer->loadIndexedPointsFromLevelToLeafs(*viewer->root, "r", indexSet);
 			viewer->uploadPointCloud();
 		}
 		PixelScene();

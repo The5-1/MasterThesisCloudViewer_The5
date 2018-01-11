@@ -74,7 +74,7 @@ class PC_Viewer
 public:
 	float customScale = 0.15f;
 
-	OctreeBoxViewer root;
+	OctreeBoxViewer* root = new OctreeBoxViewer();
 	std::vector<OctreeBoxViewer*> boxViewerVector;
 
 
