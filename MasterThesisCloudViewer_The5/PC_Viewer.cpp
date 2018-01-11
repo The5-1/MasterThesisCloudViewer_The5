@@ -32,6 +32,11 @@ PC_Viewer::PC_Viewer(std::string _pathFolder)
 	this->uploadPointCloud();
 
 	this->uploadGlBox();
+
+
+	//Helper
+	this->initboxViewerVector(this->root, "r");
+	this->boxViewerTest(this->root, "r");
 }
 
 
@@ -231,10 +236,10 @@ void PC_Viewer::printOctree(OctreeBoxViewer level, std::string levelString) {
 	std::bitset<8> bitMask;
 	int numLeafs = 0;
 
-	std::cout << levelString << " with Box: " << "(" << level.minLeafBox.x << "," << level.minLeafBox.y << "," << level.minLeafBox.z << ") to " <<
-		"(" << level.maxLeafBox.x << "," << level.maxLeafBox.y << "," << level.maxLeafBox.z << ")" << std::endl;
+	//std::cout << levelString << " with Box: " << "(" << level.minLeafBox.x << "," << level.minLeafBox.y << "," << level.minLeafBox.z << ") to " <<
+	//	"(" << level.maxLeafBox.x << "," << level.maxLeafBox.y << "," << level.maxLeafBox.z << ")" << std::endl;
 
-
+	std::cout << levelString << ": (name: " << level.name << ") " << " (drawn: " << level.drawn << ") " << " (vboId: " << level.vboID << ") " << " (lod: " << level.lod << ") " << std::endl;
 
 	for (int i = 0; i < 8; i++) {
 		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
@@ -1036,4 +1041,50 @@ void PC_Viewer::fastStartLoad(OctreeBoxViewer level, std::string levelString, fl
 
 
 	this->pathFolder + "/data/r/" + levelString + ".bin";
+}
+
+
+void PC_Viewer::initboxViewerVector(OctreeBoxViewer level, std::string levelString) {
+	//Helper
+	std::bitset<8> bitMask;
+	int numLeafs = 0;
+
+	level.name = levelString;
+	this->boxViewerVector.push_back(&level);
+
+	for (int i = 0; i < 8; i++) {
+		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
+		if (bitMask[i] == 1) {
+			this->initboxViewerVector(*level.childs[numLeafs], levelString + std::to_string(i));
+			numLeafs++;
+		}
+	}
+}
+
+void PC_Viewer::boxViewerTest(OctreeBoxViewer level, std::string levelString) {
+	std::cout << "--- Print Octree before change:" << std::endl;
+	this->printOctree(this->root, "r");
+
+	std::cout << "--- Print Vector  before change: Size " << this->boxViewerVector.size() << std::endl;
+	for (int i = 0; i < this->boxViewerVector.size(); i++) {
+		std::cout << "(name: " << this->boxViewerVector[i]->name << ") " << " (drawn: " << this->boxViewerVector[i]->drawn << ") " << " (vboId: " << this->boxViewerVector[i]->vboID << ") " << " (lod: " << this->boxViewerVector[i]->lod << ") " << std::endl;
+		//std::cout << "(name: " << this->boxViewerVector[i].name << ") " << " (drawn: " << this->boxViewerVector[i].drawn << ") " << " (vboId: " << this->boxViewerVector[i].vboID << ") " << " (lod: " << this->boxViewerVector[i].lod << ") " << std::endl;
+	}
+
+	for (int i = 0; i < this->boxViewerVector.size(); i++) {
+		this->boxViewerVector[i]->drawn = true;
+		this->boxViewerVector[i]->vboID = 500.0f;
+		//this->boxViewerVector[i].drawn = true;
+		//this->boxViewerVector[i].vboID = 500.0f;
+	}
+
+	std::cout << "--- Print Octree:" << std::endl;
+	this->printOctree(this->root, "r");
+
+	std::cout << "--- Print Vector:" << std::endl;
+	for (int i = 0; i < this->boxViewerVector.size(); i++) {
+		std::cout << "(name: " << this->boxViewerVector[i]->name << ") " << " (drawn: " << this->boxViewerVector[i]->drawn << ") " << " (vboId: " << this->boxViewerVector[i]->vboID << ") " << " (lod: " << this->boxViewerVector[i]->lod << ") " << std::endl;
+		//std::cout << "(name: " << this->boxViewerVector[i].name << ") " << " (drawn: " << this->boxViewerVector[i].drawn << ") " << " (vboId: " << this->boxViewerVector[i].vboID << ") " << " (lod: " << this->boxViewerVector[i].lod << ") " << std::endl;
+	}
+	
 }

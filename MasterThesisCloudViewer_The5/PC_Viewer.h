@@ -26,15 +26,16 @@ public:
 
 	bool drawn = false;
 	int vboID = -1;
-
+	float lod = 0.0f;
+	std::string name;
 	//std::string debugName = "Hallo";
 
 public:
 
 	OctreeBoxViewer()
 	{
-		this->drawn = false;
-		this->vboID = -1;
+		//this->drawn = false;
+		//this->vboID = -1;
 	}
 
 	//~OctreeBoxViewer() = default;
@@ -74,6 +75,8 @@ public:
 	float customScale = 0.15f;
 
 	OctreeBoxViewer root;
+	std::vector<OctreeBoxViewer*> boxViewerVector;
+
 
 	std::string pathFolder; //"D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree"
 
@@ -152,6 +155,10 @@ public:
 	void dynamicDraw();
 
 	void fastStartLoad(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD);
+
+	void initboxViewerVector(OctreeBoxViewer level, std::string levelString);
+
+	void boxViewerTest(OctreeBoxViewer level, std::string levelString);
 
 public:
 	void getLeafNames(std::string currentLeafName);
