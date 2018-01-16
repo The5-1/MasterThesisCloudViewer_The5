@@ -18,7 +18,7 @@
 
 struct OctreeBoxViewer {
 public:
-	unsigned long int numPoints = 0;
+	int numPoints = -1;
 	unsigned char bitMaskChar = 0;
 	glm::vec3 minLeafBox, maxLeafBox;
 
@@ -57,7 +57,7 @@ struct DynamicVBOloader {
 
 	bool operator<(const DynamicVBOloader& a) const
 	{
-		return lod < a.lod;
+		return lod > a.lod;
 	}
 
 	//Overload << in struct: https://stackoverflow.com/questions/16291623/operator-overloading-c-too-many-parameters-for-operation
@@ -147,6 +147,12 @@ public:
 	bool cullWithViewFrustrum(OctreeBoxViewer & leaf, viewFrustrum & vF);
 
 	void dynamicStartLoad(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD);
+
+	bool dynamicLodBySize(OctreeBoxViewer & level, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD, float & projectedSize);
+
+	bool dynamicLodByDistance(OctreeBoxViewer & level, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD, float & projectedSize);
+
+	float dynamicLodBySize(OctreeBoxViewer & level, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD);
 
 	void dynamicVBOload(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum & vF, float minimumLOD);
 

@@ -180,6 +180,7 @@ int index0 = 0, index1 = 0, index2 = 0;
 bool refresh = false;
 bool print = false;
 bool printDynamic = false;
+float lodLevel = 0.0f;
 
 /* *********************************************************************************************************
 TweakBar
@@ -204,6 +205,7 @@ void setupTweakBar() {
 	TwAddVarRW(tweakBar, "Print", TW_TYPE_BOOLCPP, &print, " label='Print' ");
 
 	TwAddSeparator(tweakBar, "Dynamic-Load Print", nullptr);
+	TwAddVarRW(tweakBar, "LOD Level", TW_TYPE_FLOAT, &lodLevel, " label='LOD Level' min=0.0 step=1.0 max=1000.0");
 	TwAddVarRW(tweakBar, "Print Dynamic", TW_TYPE_BOOLCPP, &printDynamic, " label='Print Dynamic' ");
 }
 
@@ -270,7 +272,7 @@ void init() {
 	*****************************************************************/
 	viewer = new PC_Viewer("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree");
 	viewer->octreeModelMatrix(*viewer->root, modelMatrixOctree);
-	viewer->dynamicSetOctreeVBOs(5);
+	viewer->dynamicSetOctreeVBOs(2);
 
 	//binaryDraw = new BinaryReadDraw("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree/data/r/r024.bin");
 	//binaryDraw->upload();
@@ -524,8 +526,8 @@ void dynamicPixelScene() {
 
 	pixelShader.uniform("glPointSize", glPointSizeFloat);
 
-	viewer->dynamicStartLoad(*viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position), *viewfrustrum, 0.0f);
-	//viewer->dynamicDraw();
+	viewer->dynamicStartLoad(*viewer->root, "r", 70.0f, resolution.y, glm::vec3(cam.position), *viewfrustrum, lodLevel);
+	viewer->dynamicDraw();
 
 	pixelShader.disable();
 	glDisable(GL_POINT_SPRITE);

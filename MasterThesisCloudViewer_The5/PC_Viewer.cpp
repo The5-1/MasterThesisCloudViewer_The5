@@ -632,10 +632,19 @@ void PC_Viewer::dynamicSetMaximumVertices(int _max) {
 
 void PC_Viewer::dynamicSetOctreeVBOs(int _max) {
 	glDeleteBuffers(this->dynamicOctreeVBOs.size(), this->dynamicOctreeVBOs.data());
-
 	this->dynamicOctreeVBOs.resize(2 * _max); //Buffers for positions and colors
-
 	glGenBuffers(this->dynamicOctreeVBOs.size(), this->dynamicOctreeVBOs.data());
+
+	this->pcVertices.clear();
+	this->pcColors.clear();
+
+	//for (int i = 0; i < _max; i++) {
+	//	glBindBuffer(GL_ARRAY_BUFFER, i);
+	//	glBufferData(GL_ARRAY_BUFFER, this->pcVertices.size() * sizeof(float) * 3, this->pcVertices.data(), GL_STATIC_DRAW);
+	//
+	//	glBindBuffer(GL_ARRAY_BUFFER, i + _max);
+	//	glBufferData(GL_ARRAY_BUFFER, this->pcColors.size() * sizeof(float) * 3, this->pcColors.data(), GL_STATIC_DRAW);
+	//}
 
 	for (int i = 0; i < _max; i++) {
 		this->dynamicQueue.push(i);
@@ -833,24 +842,37 @@ bool PC_Viewer::cullWithViewFrustrum(OctreeBoxViewer& leaf, viewFrustrum& vF)
 }
 
 void PC_Viewer::dynamicStartLoad(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum& vF, float minimumLOD) {
-	std::cout << "dynamicStartLoad start" << std::endl;
+	//std::cout << "dynamicStartLoad start" << std::endl;
 
 	this->dynamicLoaders.clear();
 
-	std::cout << "dynamicVBOload start" << std::endl;
+	//std::cout << "dynamicVBOload start" << std::endl;
 	this->dynamicVBOload(level, levelString, fov, screenHeight, camPos, vF, minimumLOD);
 
+	//for (int i = 0; i < this->dynamicLoaders.size(); i++) {
+	//	std::cout << "--- pointer after dynamicVBOload " << this->dynamicLoaders[i].octree->vboID << std::endl;
+	//}
+
+	//std::cout << "dynamicVBOload end" << std::endl;
+	/*
+	std::cout << "Before sort" << std::endl;
 	for (int i = 0; i < this->dynamicLoaders.size(); i++) {
-		std::cout << "--- pointer after dynamicVBOload " << this->dynamicLoaders[i].octree->vboID << std::endl;
+		std::cout << this->dynamicLoaders[i].lod << std::endl;
 	}
-
-
-	std::cout << "dynamicVBOload end" << std::endl;
+	*/
 
 	std::sort(this->dynamicLoaders.begin(), this->dynamicLoaders.end());
 
-	std::cout << "dynamicLoaders.size " << this->dynamicLoaders.size() << std::endl;
-	std::cout << "this->dynamicOctreeVBOs.size() " << this->dynamicOctreeVBOs.size() << std::endl;
+	/*
+	std::cout << "After sort" << std::endl;
+	for (int i = 0; i < this->dynamicLoaders.size(); i++) {
+		std::cout << this->dynamicLoaders[i].lod << std::endl;
+	}
+	std::cout << "-----------------" << std::endl;
+	*/
+
+	//std::cout << "dynamicLoaders.size " << this->dynamicLoaders.size() << std::endl;
+	//std::cout << "this->dynamicOctreeVBOs.size() " << this->dynamicOctreeVBOs.size() << std::endl;
 
 	int max = this->dynamicOctreeVBOs.size() / 2;
 	int offsetVBO = max;
@@ -859,7 +881,7 @@ void PC_Viewer::dynamicStartLoad(OctreeBoxViewer level, std::string levelString,
 	if (this->dynamicLoaders.size() > max) {
 		for (int i = max; i < this->dynamicLoaders.size(); i++) {
 			if (this->dynamicLoaders[i].octree->drawn) {
-				std::cout << "!!! Draw was true" << std::endl;
+				//std::cout << "!!! Draw was true" << std::endl;
 				this->dynamicLoaders[i].octree->drawn = false;
 				this->dynamicQueue.push(this->dynamicLoaders[i].octree->vboID);
 				this->dynamicLoaders[i].octree->vboID = -1;
@@ -869,13 +891,19 @@ void PC_Viewer::dynamicStartLoad(OctreeBoxViewer level, std::string levelString,
 
 	max = std::min<int>(max, this->dynamicLoaders.size());
 
-	if (this->dynamicQueue.size() > 0) {
-		for (int i = 0; i < max; i++) {
-			std::cout << "i: " << i << std::endl;
+	//std::cout << "dynamicLoaders.size: " << this->dynamicLoaders.size() << std::endl;
+	
+	for (int i = 0; i < max; i++) {
+		if (this->dynamicQueue.size() > 0) {
+			//std::cout << "i: " << i << std::endl;
 			this->dynamicLoaders[i].octree->drawn = true;
+			//std::cout << "this->dynamicLoaders[i].octree->drawn = true;" << std::endl;
+
 			this->dynamicLoaders[i].octree->vboID = this->dynamicQueue.front();
+			//std::cout << "this->dynamicLoaders[i].octree->vboID = this->dynamicQueue.front();" << std::endl;
 
 			this->dynamicQueue.pop();
+			//std::cout << "this->dynamicQueue.pop();" << std::endl;
 
 			this->pcColors.clear();
 			this->pcVertices.clear();
@@ -884,44 +912,90 @@ void PC_Viewer::dynamicStartLoad(OctreeBoxViewer level, std::string levelString,
 			glm::vec3 treeMinLeaf = this->dynamicLoaders[i].octree->minLeafBox;
 			this->readBinaryFile(treePath, treeMinLeaf);
 
-			this->dynamicLoaders[i].numPoints = this->pcVertices.size();
+			int numPoints = this->pcVertices.size();
+			this->dynamicLoaders[i].numPoints = numPoints;
+			this->dynamicLoaders[i].octree->numPoints = numPoints;
 
-			std::cout << "Test " << this->dynamicLoaders[i].octree->vboID << std::endl;
+			std::cout << "numPoints " << numPoints << std::endl;
+			//std::cout << "dynamic numPoints " << this->dynamicLoaders[i].numPoints << std::endl;
+
+			//std::cout << "Test this->dynamicLoaders[i].octree->vboID:" << this->dynamicLoaders[i].octree->vboID << " + offset of "<< offsetVBO << std::endl;
 			glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[this->dynamicLoaders[i].octree->vboID ]);
 			glBufferData(GL_ARRAY_BUFFER, this->pcVertices.size() * sizeof(float) * 3, this->pcVertices.data(), GL_STATIC_DRAW);
-
+			//std::cout << "Bound position" << std::endl;
 			glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[this->dynamicLoaders[i].octree->vboID + offsetVBO]);
 			glBufferData(GL_ARRAY_BUFFER, this->pcColors.size() * sizeof(float) * 3, this->pcColors.data(), GL_STATIC_DRAW);
-
-			std::cout << "Test " << std::endl;
+			//std::cout << "Bound color" << std::endl;
+			//std::cout << "Test end" << std::endl;
+		}
+		else {
+			break; //ToDo: Sinnvoll? !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		}
 	}
 
-	std::cout << "dynamicStartLoad end" << std::endl;
-	std::cout << "" << std::endl;
+	//std::cout << "dynamicStartLoad end" << std::endl;
+	//std::cout << "" << std::endl;
+}
+
+bool PC_Viewer::dynamicLodBySize(OctreeBoxViewer& level, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum& vF, float minimumLOD, float &projectedSize) {
+
+	//LOD:	slope = tan( fov / 2)
+	//		projectedSize = (screenHeight / 2) * (radius / (slope * distance) );
+
+	//std::cout << "Start dynamicVBOload" << std::endl;
+
+	float angle = 2.0f * glm::pi<float>() * (fov / 360.0f);
+	float slope = glm::tan(angle / 2.0f);
+
+
+	//glm::vec3 midpoint = level.childs[numLeafs]->minLeafBox + (level.childs[numLeafs]->maxLeafBox - level.childs[numLeafs]->minLeafBox);
+	//float radius = 0.5f * glm::length(level.childs[numLeafs]->maxLeafBox - level.childs[numLeafs]->minLeafBox);
+	glm::vec3 midpoint = level.minLeafBox + (level.maxLeafBox - level.minLeafBox);
+	float radius = 0.5f * glm::length(level.maxLeafBox - level.minLeafBox);
+
+	float distance = glm::length(midpoint - camPos);
+	projectedSize = (screenHeight / 2) * (radius / (slope * distance));;
+
+	return projectedSize > minimumLOD;
+}
+
+bool PC_Viewer::dynamicLodByDistance(OctreeBoxViewer& level, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum& vF, float minimumLOD, float &projectedSize) {
+	glm::vec3 midpoint = level.minLeafBox + (level.maxLeafBox - level.minLeafBox);
+	float radius = 0.5f * glm::length(level.maxLeafBox - level.minLeafBox);
+
+	float distance = glm::length(midpoint - camPos);
+	projectedSize = distance;
+
+	return distance < minimumLOD;
+}
+
+float PC_Viewer::dynamicLodBySize(OctreeBoxViewer& level, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum& vF, float minimumLOD) {
+	float angle = 2.0f * glm::pi<float>() * (fov / 360.0f);
+	float slope = glm::tan(angle / 2.0f);
+
+
+	//glm::vec3 midpoint = level.childs[numLeafs]->minLeafBox + (level.childs[numLeafs]->maxLeafBox - level.childs[numLeafs]->minLeafBox);
+	//float radius = 0.5f * glm::length(level.childs[numLeafs]->maxLeafBox - level.childs[numLeafs]->minLeafBox);
+	glm::vec3 midpoint = level.minLeafBox + (level.maxLeafBox - level.minLeafBox);
+	float radius = 0.5f * glm::length(level.maxLeafBox - level.minLeafBox);
+
+	float distance = glm::length(midpoint - camPos);
+	float projectedSize = (screenHeight / 2) * (radius / (slope * distance));;
+
+	return projectedSize;
 }
 
 void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum& vF, float minimumLOD) {
 	std::bitset<8> bitMask;
 	int numLeafs = 0;
 
-	//LOD:	slope = tan( fov / 2)
-	//		projectedSize = (screenHeight / 2) * (radius / (slope * distance) );
-
-	std::cout << "Start dynamicVBOload" << std::endl;
-
 	for (int i = 0; i < 8; i++) {
 		bitMask[i] = (level.bitMaskChar & (1 << i)) != 0;
 		if (bitMask[i] == 1) {
-			float angle = 2.0f * glm::pi<float>() * (fov / 360.0f);
-			float slope = glm::tan(angle / 2.0f);
-			glm::vec3 midpoint = level.childs[numLeafs]->minLeafBox + (level.childs[numLeafs]->maxLeafBox - level.childs[numLeafs]->minLeafBox);
-			float radius = 0.5f * glm::length(level.childs[numLeafs]->maxLeafBox - level.childs[numLeafs]->minLeafBox);
-			float distance = glm::length(midpoint - camPos);
-			float projectedSize = (screenHeight / 2) * (radius / (slope * distance));;
-
-			if (projectedSize > minimumLOD && cullWithViewFrustrum(level, vF)) {
-				this->dynamicLoaders.push_back(DynamicVBOloader(*level.childs[numLeafs], levelString, projectedSize));
+			
+			float projectedSize;
+			if (this->dynamicLodBySize(*level.childs[numLeafs], fov, screenHeight, camPos, vF, minimumLOD, projectedSize)) {
+				this->dynamicLoaders.push_back(DynamicVBOloader(*level.childs[numLeafs], levelString + std::to_string(i), projectedSize));
 			}
 			else {
 				if (level.childs[numLeafs]->drawn) {
@@ -948,7 +1022,7 @@ void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, f
 		}
 	}
 
-	std::cout << "End dynamicVBOload" << std::endl;
+	//std::cout << "End dynamicVBOload" << std::endl;
 }
 
 //void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, float fov, float screenHeight, glm::vec3 camPos, viewFrustrum& vF, float minimumLOD) {
@@ -1012,46 +1086,47 @@ void PC_Viewer::printLoaders() {
 }
 
 void PC_Viewer::dynamicDraw() {
+	/****************
+	Draw
+	****************/
+	//std::cout << "!!! Start Drawing" << std::endl;
+	
 	int max = this->dynamicOctreeVBOs.size() / 2;
-	/******
-	Test-Case
-	******/
-	//std::vector<glm::vec3> testPos = { glm::vec3(0.0f) };
-	//std::vector<glm::vec3> testCol = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	//for (int i = 0; i < max; i++) {
-	//	glBindBuffer(GL_ARRAY_BUFFER, this->vboPC[i]);
-	//	glBufferData(GL_ARRAY_BUFFER, testPos.size() * sizeof(float) * 3, testPos.data(), GL_STATIC_DRAW);
+	
+	//std::cout << "!!! Start Drawing" << std::endl;
+	//std::cout << "this->dynamicOctreeVBOs " << this->dynamicOctreeVBOs.size() << std::endl;
+	//std::cout << " this->dynamicLoaders " << this->dynamicLoaders.size() << std::endl;
+	
+	int min = std::min<int>(this->dynamicLoaders.size(), max);
+	
+	for (int i = 0; i < min; i++) {
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[i]);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	
+			glEnableVertexAttribArray(1);
+			glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[i + max]);
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-	//	glBindBuffer(GL_ARRAY_BUFFER, this->vboPC[i + max]);
-	//	glBufferData(GL_ARRAY_BUFFER, pcColors.size() * sizeof(float) * 3, pcColors.data(), GL_STATIC_DRAW);
-	//}
-
-	//for (int i = 0; i < max; i++) {
-	//	glEnableVertexAttribArray(0);
-	//	glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[i]);
-	//	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	//	glEnableVertexAttribArray(1);
-	//	glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[i + max]);
-	//	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	//	glDrawArrays(GL_POINTS, 0, this->dynamicLoaders[i].numPoints);
-	//}
-
-	std::cout << "!!! Start Drawing" << std::endl;
-
-	for (int i = 0; i < max; i++) {
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[i]);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, this->dynamicOctreeVBOs[i + max]);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-		glDrawArrays(GL_POINTS, 0, this->dynamicLoaders[i].numPoints);
+			glDrawArrays(GL_POINTS, 0, this->dynamicLoaders[i].octree->numPoints);
 	}
+	
+	//std::cout << "!!! End Drawing" << std::endl;
 
+	/****************
+	Debug
+	****************/
+	//for (int i = 0; i < this->dynamicLoaders.size(); i++) {
+	//	std::cout << i << std::endl;
+	//	std::cout << "this->dynamicLoaders[i].lod " << this->dynamicLoaders[i].lod << " , " << std::endl;
+	//	std::cout << "this->dynamicLoaders[i].name " << this->dynamicLoaders[i].name << " , " << std::endl;
+	//	std::cout << "this->dynamicLoaders[i].octree->numPoints " << this->dynamicLoaders[i].octree->numPoints << " , " << std::endl;
+	//	std::cout << "this->dynamicLoaders[i].octree->drawn " << this->dynamicLoaders[i].octree->drawn << " , " << std::endl;
+	//	std::cout << "this->dynamicLoaders[i].octree->name " << this->dynamicLoaders[i].octree->name << " , " << std::endl;
+	//	std::cout << "this->dynamicLoaders[i].octree->vboID " << this->dynamicLoaders[i].octree->vboID << " , " << std::endl;
+	//}
+	//
+	//std::cout << " -------------------------------------------- " << std::endl;
 }
 
 
