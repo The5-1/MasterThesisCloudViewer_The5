@@ -195,7 +195,7 @@ void initGL() {
 	viewMatrix = glm::lookAt(eye,center,up);
 	float fov = 70.0f;
 	GLfloat aspect = (GLfloat)WIDTH / (GLfloat)HEIGHT;
-	float nearP = 1.0f, farP = 500.0f;
+	float nearP = 1.0f, farP = 1000.0f;
 	projMatrix =  glm::perspective(fov, aspect, nearP, farP);
 
 	cam.Hnear = 2.0f * glm::tan(fov / 2.0f) * nearP;
@@ -226,7 +226,7 @@ void reshape(int w, int h) {
 
 	if (initialization) {
 		glViewport(0, 0,(GLsizei)w, (GLsizei)h);
-		projMatrix = glm::perspective(70.0f, (GLfloat)w / (GLfloat)h, 1.0f, 100.0f);
+		projMatrix = glm::perspective(70.0f, (GLfloat)w / (GLfloat)h, 1.0f, 1000.0f);
 		initialization = false;
 	}
 

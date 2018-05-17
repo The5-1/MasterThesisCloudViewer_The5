@@ -651,6 +651,25 @@ void PC_Viewer::dynamicSetOctreeVBOs(int _max) {
 	}
 }
 
+void PC_Viewer::dynamicLoadRoot() {
+	glGenBuffers(2, this->vboRootPC);
+
+	std::string treePath = this->pathFolder + "/data/r/" + "r" + ".bin";
+	glm::vec3 treeMinLeaf = this->root->minLeafBox;
+	this->readBinaryFile(treePath, treeMinLeaf);
+
+	this->vboRootSizePC = this->pcVertices.size();
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboRootPC[0]);
+	glBufferData(GL_ARRAY_BUFFER, this->pcVertices.size() * sizeof(float) * 3, this->pcVertices.data(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboRootPC[1]);
+	glBufferData(GL_ARRAY_BUFFER, this->pcColors.size() * sizeof(float) * 3, this->pcColors.data(), GL_STATIC_DRAW);
+
+	this->pcColors.clear();
+	this->pcVertices.clear();
+}
+
 bool PC_Viewer::onCorrectPlaneSide(glm::vec3& corner, glm::vec3& normal, glm::vec3& point) {
 	if (glm::dot(normal, (corner - point)) > 0) {
 		return true;
@@ -916,7 +935,7 @@ void PC_Viewer::dynamicStartLoad(OctreeBoxViewer level, std::string levelString,
 			this->dynamicLoaders[i].numPoints = numPoints;
 			this->dynamicLoaders[i].octree->numPoints = numPoints;
 
-			std::cout << "numPoints " << numPoints << std::endl;
+			//std::cout << "numPoints " << numPoints << std::endl;
 			//std::cout << "dynamic numPoints " << this->dynamicLoaders[i].numPoints << std::endl;
 
 			//std::cout << "Test this->dynamicLoaders[i].octree->vboID:" << this->dynamicLoaders[i].octree->vboID << " + offset of "<< offsetVBO << std::endl;
@@ -994,7 +1013,7 @@ void PC_Viewer::dynamicVBOload(OctreeBoxViewer level, std::string levelString, f
 		if (bitMask[i] == 1) {
 			
 			float projectedSize;
-			if (this->dynamicLodBySize(*level.childs[numLeafs], fov, screenHeight, camPos, vF, minimumLOD, projectedSize)) {
+			if (this->dynamicLodByDistance(*level.childs[numLeafs], fov, screenHeight, camPos, vF, minimumLOD, projectedSize)) {
 				this->dynamicLoaders.push_back(DynamicVBOloader(*level.childs[numLeafs], levelString + std::to_string(i), projectedSize));
 			}
 			else {
@@ -1086,6 +1105,19 @@ void PC_Viewer::printLoaders() {
 }
 
 void PC_Viewer::dynamicDraw() {
+	/****************
+	Draw root level
+	****************/
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboRootPC[0]);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, this->vboRootPC[1]);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glDrawArrays(GL_POINTS, 0, this->vboRootSizePC);
+
 	/****************
 	Draw
 	****************/

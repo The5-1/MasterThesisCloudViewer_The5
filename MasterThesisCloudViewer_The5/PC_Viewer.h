@@ -57,7 +57,11 @@ struct DynamicVBOloader {
 
 	bool operator<(const DynamicVBOloader& a) const
 	{
-		return lod > a.lod;
+		//For dynamic load by size
+		//return lod > a.lod;
+
+		//For dynamic load by distance
+		return lod < a.lod;
 	}
 
 	//Overload << in struct: https://stackoverflow.com/questions/16291623/operator-overloading-c-too-many-parameters-for-operation
@@ -106,9 +110,12 @@ public:
 	std::vector<std::string> dynamicOctreeNames;
 	std::vector<DynamicVBOloader> dynamicLoaders;
 	std::queue<int> dynamicQueue;
-
 	unsigned int dynamicMaxVertices = 2000000;
 
+	GLuint vboRootPC[2];
+	int vboRootSizePC;
+	std::vector<glm::vec3> pcRootVertices;
+	std::vector<glm::vec3> pcRootColors;
 
 	//GL Box Variables
 	GLuint vboBox[2];
@@ -139,6 +146,8 @@ public:
 	void dynamicSetMaximumVertices(int _max);
 
 	void dynamicSetOctreeVBOs(int _max);
+
+	void dynamicLoadRoot();
 
 	bool onCorrectPlaneSide(glm::vec3 & corner, glm::vec3 & normal, glm::vec3 & point);
 

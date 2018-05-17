@@ -133,7 +133,7 @@ void drawFBO(FBO *_fbo) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
-	glClearColor(0.2f, 0.2f, 0.2f, 1);
+	glClearColor(1.0f, 1.0f, 1.0f, 1);
 	//Color
 	standardMiniColorFboShader.enable();
 	_fbo->bindTexture(0);
@@ -272,7 +272,8 @@ void init() {
 	*****************************************************************/
 	viewer = new PC_Viewer("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree");
 	viewer->octreeModelMatrix(*viewer->root, modelMatrixOctree);
-	viewer->dynamicSetOctreeVBOs(2);
+	viewer->dynamicSetOctreeVBOs(15);
+	viewer->dynamicLoadRoot();
 
 	//binaryDraw = new BinaryReadDraw("D:/Dev/Assets/Pointcloud/ATL_RGB_vehicle_scan-20171228T203225Z-001/ATL_RGB_vehicle_scan/Potree/data/r/r024.bin");
 	//binaryDraw->upload();
@@ -415,7 +416,7 @@ void PixelScene() {
 	//Clear
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 1);
 
 	glDisable(GL_CULL_FACE);
 
@@ -482,7 +483,7 @@ void dynamicPixelScene() {
 	//Clear
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 1);
 
 	glDisable(GL_CULL_FACE);
 
